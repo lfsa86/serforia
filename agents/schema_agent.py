@@ -29,10 +29,15 @@ Conocimiento del dominio:
 - UIT: Unidad Impositiva Tributaria (para multas)
 - UBIGEO: Código geográfico estándar del Perú
 
-Responde SIEMPRE en formato JSON con:
-- table_description: Descripción de la tabla
-- column_descriptions: Objeto con descripción para cada columna""",
-            temperature=0.2
+Responde SIEMPRE en formato JSON válido, SIN backticks ni markdown:
+{
+  "table_description": "Descripción clara de la tabla",
+  "column_descriptions": {
+    "nombre_columna": "descripción de la columna"
+  }
+}""",
+            temperature=0.2,
+            max_token=4000
         )
 
     def analyze_table_schema(self, table_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -45,23 +50,15 @@ Responde SIEMPRE en formato JSON con:
         Returns:
             Dictionary with enriched descriptions
         """
-        prompt = f"""
-        Analiza esta tabla de la base de datos SERFOR y proporciona descripciones detalladas:
+        prompt = f"""Analiza esta tabla SERFOR y devuelve JSON válido:
 
-        Nombre de tabla: {table_info.get('table_name', 'Unknown')}
-        Número estimado de filas: {table_info.get('row_count', 'Unknown')}
+Tabla: {table_info.get('table_name', 'Unknown')}
+Filas: {table_info.get('row_count', 'Unknown')}
 
-        Columnas:
-        {self._format_columns_for_analysis(table_info.get('columns', []))}
+Columnas:
+{self._format_columns_for_analysis(table_info.get('columns', []))}
 
-        Proporciona descripciones específicas y útiles que ayuden a entender:
-        - Qué representa cada campo
-        - Cómo se relaciona con procesos forestales/ambientales
-        - Valores típicos o rangos esperados
-        - Restricciones o formatos especiales
-
-        Responde en formato JSON con table_description y column_descriptions.
-        """
+Devuelve JSON válido sin backticks:"""
 
         response = self.run(prompt)
 

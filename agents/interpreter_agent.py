@@ -38,13 +38,31 @@ Responde SIEMPRE en formato JSON con las siguientes claves:
             Dictionary with extracted intent information
         """
         user_query = input_data.get("user_query", "")
+        schema_info = input_data.get("schema_info", {})
+
+        # Format complete schema information for the prompt
+        tables_summary = ""
+        if schema_info and "tables" in schema_info:
+            tables_summary = "\nEsquema completo de base de datos:\n"
+            for table_name, table_data in schema_info["tables"].items():
+                tables_summary += f"\n📋 Tabla: {table_data.get('full_name', table_name)}\n"
+                tables_summary += f"   Descripción: {table_data.get('description', 'Sin descripción')}\n"
+                tables_summary += f"   Filas estimadas: {table_data.get('estimated_rows', 'Desconocido')}\n"
+                tables_summary += f"   Columnas (TODAS):\n"
+
+                # Include ALL columns with descriptions
+                for col in table_data.get("columns", []):
+                    col_desc = col.get('description', 'Sin descripción')
+                    tables_summary += f"     - {col['name']} ({col['type']}): {col_desc}\n"
 
         prompt = f"""
         Analiza la siguiente consulta del usuario sobre datos de SERFOR:
 
         "{user_query}"
 
-        Extrae la información estructurada en formato JSON.
+        Esquema de base de datos disponible:{tables_summary}
+
+        Extrae la información estructurada en formato JSON considerando las tablas y columnas disponibles.
         """
 
         response = self.run(prompt)

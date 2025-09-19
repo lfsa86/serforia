@@ -6,12 +6,30 @@ from .interpreter_agent import InterpreterAgent
 from .planner_agent import PlannerAgent
 from .executor_agent import ExecutorAgent
 from .response_agent import ResponseAgent
+from database.schema_mapper import DynamicSchemaMapper
+from utils.logger import get_logger
 
 class AgentOrchestrator:
     """Orchestrates the workflow between all agents in the SERFOR system"""
 
     def __init__(self):
-        """Initialize all agents"""
+        """Initialize all agents and load schema information"""
+        # Initialize logger
+        self.logger = get_logger()
+
+        # Load schema information
+        self.schema_mapper = DynamicSchemaMapper()
+        self.schema_info = self.schema_mapper.get_schema_for_ai()
+
+        self.logger.log_agent_activity(
+            "orchestrator",
+            "schema_loading",
+            None,
+            f"Schema loaded: {len(self.schema_info.get('tables', {}))} tables"
+        )
+
+        print(f"📋 Esquema cargado: {len(self.schema_info.get('tables', {}))} tablas disponibles")
+
         self.interpreter = InterpreterAgent()
         self.planner = PlannerAgent()
         self.executor = ExecutorAgent()
@@ -34,17 +52,27 @@ class AgentOrchestrator:
         Returns:
             Dictionary with the complete processing results
         """
-        workflow_data = {"user_query": user_query}
+        # Log user query
+        self.logger.log_user_query(user_query)
+
+        workflow_data = {
+            "user_query": user_query,
+            "schema_info": self.schema_info  # Include schema in all steps
+        }
 
         try:
             # Step 1: Interpret the user query
             print("🔍 Interpretando consulta...")
+            self.logger.log_agent_activity("orchestrator", "starting_interpretation", workflow_data)
             interpretation_result = self.interpreter.process(workflow_data)
+            self.logger.log_agent_activity("interpreter", "process_completed", workflow_data, interpretation_result)
             workflow_data.update(interpretation_result)
 
             # Step 2: Create execution plan with task management
             print("📋 Creando plan de ejecución...")
+            self.logger.log_agent_activity("orchestrator", "starting_planning", workflow_data)
             planning_result = self.planner.process(workflow_data)
+            self.logger.log_agent_activity("planner", "process_completed", workflow_data, planning_result)
             workflow_data.update(planning_result)
 
             # Show planned tasks
@@ -53,10 +81,13 @@ class AgentOrchestrator:
                 print(f"📊 Plan creado con {len(task_manager.tasks)} tareas")
                 for task in task_manager.tasks:
                     print(f"   - {task.description} [{task.action_type}]")
+                    self.logger.log_task_execution(task.id, task.description, "planned")
 
             # Step 3: Execute the plan with task management
             print("⚡ Ejecutando plan con gestión de tareas...")
+            self.logger.log_agent_activity("orchestrator", "starting_execution", workflow_data)
             execution_result = self.executor.process(workflow_data)
+            self.logger.log_agent_activity("executor", "process_completed", workflow_data, execution_result)
             workflow_data.update(execution_result)
 
             # Show execution summary
@@ -69,7 +100,9 @@ class AgentOrchestrator:
 
             # Step 4: Format response
             print("📝 Formateando respuesta...")
+            self.logger.log_agent_activity("orchestrator", "starting_response_generation", workflow_data)
             response_result = self.response_agent.process(workflow_data)
+            self.logger.log_agent_activity("response", "process_completed", workflow_data, response_result)
             workflow_data.update(response_result)
 
             return {

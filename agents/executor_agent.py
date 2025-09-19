@@ -7,17 +7,22 @@ from .task_manager import TaskManager, ExecutionTask, TaskStatus
 from instantneo import SkillManager
 import time
 from typing import List
+from utils.logger import get_logger
 
 class ExecutorAgent(BaseAgent):
     """Agent that executes database operations using specialized skills with task management"""
 
     def __init__(self):
+        # Initialize logger
+        self.logger = get_logger()
+
         # Initialize skill manager for database operations
         skills = SkillManager()
 
         # Register database skills
         from database.skills import (
             execute_select_query,
+            execute_complex_query,
             get_table_schemas,
             get_table_sample,
             count_table_rows,
@@ -28,6 +33,7 @@ class ExecutorAgent(BaseAgent):
         )
 
         skills.register_skill(execute_select_query)
+        skills.register_skill(execute_complex_query)
         skills.register_skill(get_table_schemas)
         skills.register_skill(get_table_sample)
         skills.register_skill(count_table_rows)
@@ -41,19 +47,31 @@ class ExecutorAgent(BaseAgent):
             role_setup="""Eres un agente ejecutor especializado en realizar consultas y operaciones sobre la base de datos SERFOR_BDDWH.
 
 Tienes acceso a skills especializadas para:
-- Consultar la tabla Dir.T_GEP_INFRACTORES
-- Consultar la tabla Dir.T_GEP_TITULOHABILITANTE
-- Realizar operaciones de agregación y filtrado
-- Validar parámetros de consulta
-- Transformar datos según sea necesario
+- execute_select_query: Consultas SELECT simples
+- execute_complex_query: Consultas complejas con JOINs entre tablas
+- get_table_schemas: Obtener esquemas de tablas
+- search_table_data: Buscar datos con filtros
+- aggregate_table_data: Agregaciones (COUNT, SUM, AVG, MIN, MAX)
+- count_table_rows: Contar filas de tablas
+- get_table_sample: Obtener muestras de datos
+
+TABLAS DISPONIBLES:
+- Dir.T_GEP_INFRACTORES: Información de infracciones forestales
+- Dir.T_GEP_TITULOHABILITANTE: Información de títulos habilitantes
+
+ESTRATEGIA PARA CONSULTAS COMPLEJAS:
+- Para consultas que requieren relacionar ambas tablas, usa execute_complex_query
+- Construye queries SQL completas con JOINs en lugar de múltiples pasos
+- NO inventes tablas temporales ni resultados intermedios
+- Usa las columnas reales que existen en el esquema
 
 Ejecutas tareas individuales según su tipo de acción:
 - validate: Validar parámetros y datos
-- query: Realizar consultas SQL
-- transform: Transformar datos
-- calculate: Realizar cálculos
-- aggregate: Agregar datos
-- format: Formatear resultados
+- query: Realizar consultas SQL (simple o compleja según necesidad)
+- transform: Procesar datos ya obtenidos
+- calculate: Realizar cálculos sobre datos existentes
+- aggregate: Agregar datos con funciones SQL
+- format: Formatear resultados finales
 
 Para cada tarea, proporciona un resultado claro y estructurado.
 Si encuentras errores, describe específicamente qué falló y por qué.""",
@@ -143,8 +161,24 @@ Si encuentras errores, describe específicamente qué falló y por qué.""",
             # Execute using the agent
             response = self.run(prompt)
 
-            # Mark task as completed
+            # Check if the response indicates an error
+            if self._is_error_response(response):
+                error_message = f"Task execution failed: {response}"
+                task.complete_failure(error_message)
+                print(f"❌ Tarea fallida: {task.description} - {error_message}")
+                
+                return {
+                    "task_id": task.id,
+                    "status": "failed",
+                    "description": task.description,
+                    "error": error_message,
+                    "response": response,
+                    "retry_count": task.retry_count
+                }
+
+            # Mark task as completed successfully
             task.complete_success(response)
+            print(f"✅ Tarea completada: {task.description}")
 
             return {
                 "task_id": task.id,
@@ -157,6 +191,7 @@ Si encuentras errores, describe específicamente qué falló y por qué.""",
         except Exception as e:
             error_message = f"Error executing task: {str(e)}"
             task.complete_failure(error_message)
+            print(f"❌ Excepción en tarea: {task.description} - {error_message}")
 
             return {
                 "task_id": task.id,
@@ -165,6 +200,28 @@ Si encuentras errores, describe específicamente qué falló y por qué.""",
                 "error": error_message,
                 "retry_count": task.retry_count
             }
+
+    def _is_error_response(self, response: str) -> bool:
+        """Check if the response indicates an error"""
+        error_indicators = [
+            "error",
+            "Error",
+            "ERROR",
+            "failed",
+            "Failed",
+            "FAILED",
+            "exception",
+            "Exception",
+            "not JSON serializable",
+            "query validation failed",
+            "connection failed",
+            "no se puede",
+            "no se pudo",
+            "falló",
+            "fallo"
+        ]
+
+        return any(indicator in response for indicator in error_indicators)
 
     def generate_task_prompt(self, task: ExecutionTask) -> str:
         """Generate appropriate prompt for task execution"""
@@ -181,7 +238,7 @@ Si encuentras errores, describe específicamente qué falló y por qué.""",
             return base_prompt + "\nValida los parámetros y datos especificados. Retorna 'VALID' si todo está correcto, o describe los problemas encontrados."
 
         elif task.action_type == "query":
-            return base_prompt + "\nEjecuta la consulta SQL especificada. Retorna los resultados estructurados."
+            return base_prompt + "\nEjecuta la consulta especificada. Si necesitas relacionar tablas, usa execute_complex_query con un JOIN completo. NO uses tablas temporales. Retorna los resultados estructurados."
 
         elif task.action_type == "transform":
             return base_prompt + "\nTransforma los datos según los parámetros. Retorna los datos transformados."

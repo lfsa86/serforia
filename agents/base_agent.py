@@ -19,6 +19,7 @@ class BaseAgent(ABC):
         provider: str = "openai",
         model: str = "gpt-4o-mini",
         temperature: float = 0.4,
+        max_token: int = 4000,
         skills: Optional[SkillManager] = None
     ):
         self.name = name
@@ -31,7 +32,8 @@ class BaseAgent(ABC):
             model=model,
             temperature=temperature,
             role_setup=role_setup,
-            skills=skills
+            skills=skills,
+            max_tokens=max_token
         )
 
     @abstractmethod
@@ -48,5 +50,5 @@ class BaseAgent(ABC):
         return {
             "name": self.name,
             "role": self.role_setup,
-            "skills": len(self.agent.skills.skills) if self.agent.skills else 0
+            "skills": len(self.agent.get_all_skills_metadata()) if self.agent.config.skills else 0
         }

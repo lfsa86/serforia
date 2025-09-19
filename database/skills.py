@@ -5,11 +5,13 @@ from instantneo.skills import skill
 from typing import Dict, Any, List, Optional
 from .connection_manager import DatabaseConnectionManager
 from .schema_mapper import DynamicSchemaMapper
+from utils.logger import get_logger
 import json
 
 # Global instances
 db_manager = DatabaseConnectionManager()
 schema_mapper = DynamicSchemaMapper()
+logger = get_logger()
 
 @skill(
     description="Execute a safe SQL SELECT query on the SERFOR database",
@@ -41,21 +43,30 @@ def execute_select_query(query: str, max_rows: int = 100) -> str:
         # Execute query with safety limits
         result = db_manager.execute_query_safely(query, max_rows)
 
+        # Log the executed query
+        print(f"🔍 SQL EJECUTADO: {query}")
+        logger.log_sql_query(query, result["success"], result.get("row_count", 0), result.get("error"))
+
         if result["success"]:
+            print(f"✅ Consulta exitosa: {result['row_count']} filas devueltas")
             return json.dumps({
                 "success": True,
                 "data": result["data"],
                 "columns": result["columns"],
                 "row_count": result["row_count"],
+                "query_executed": query,
                 "message": f"Query executed successfully. Returned {result['row_count']} rows."
             })
         else:
+            print(f"❌ Error en consulta: {result['error']}")
             return json.dumps({
                 "success": False,
-                "error": result["error"]
+                "error": result["error"],
+                "query_attempted": query
             })
 
     except Exception as e:
+        print(f"❌ Error inesperado: {str(e)}")
         return json.dumps({
             "success": False,
             "error": f"Unexpected error: {str(e)}"
@@ -352,6 +363,68 @@ def aggregate_table_data(
         return json.dumps({
             "success": False,
             "error": f"Error performing aggregation: {str(e)}"
+        })
+
+@skill(
+    description="Execute complex SQL queries with JOINs between tables",
+    parameters={
+        "query": "Complete SQL query with JOINs, WHERE clauses, etc.",
+        "max_rows": "Maximum number of rows to return (default: 100)"
+    }
+)
+def execute_complex_query(query: str, max_rows: int = 100) -> str:
+    """
+    Execute complex SQL queries that involve JOINs, subqueries, etc.
+
+    Args:
+        query: Complete SQL query string
+        max_rows: Maximum rows to return
+
+    Returns:
+        JSON string with query results
+    """
+    try:
+        # Enhanced validation for complex queries
+        validation = db_manager.validate_query_syntax(query)
+        if not validation["valid"]:
+            return json.dumps({
+                "success": False,
+                "error": f"Query validation failed: {validation['error']}"
+            })
+
+        # Execute complex query
+        result = db_manager.execute_query_safely(query, max_rows)
+
+        # Log the executed query
+        print(f"🔍 COMPLEX SQL EJECUTADO: {query}")
+        logger.log_sql_query(query, result["success"], result.get("row_count", 0), result.get("error"))
+
+        if result["success"]:
+            print(f"✅ Consulta compleja exitosa: {result['row_count']} filas devueltas")
+            return json.dumps({
+                "success": True,
+                "data": result["data"],
+                "columns": result["columns"],
+                "row_count": result["row_count"],
+                "query_executed": query,
+                "query_type": "complex_join",
+                "message": f"Complex query executed successfully. Returned {result['row_count']} rows."
+            })
+        else:
+            print(f"❌ Error en consulta compleja: {result['error']}")
+            return json.dumps({
+                "success": False,
+                "error": result["error"],
+                "query_attempted": query,
+                "query_type": "complex_join"
+            })
+
+    except Exception as e:
+        print(f"❌ Error inesperado en consulta compleja: {str(e)}")
+        logger.log_error("complex_query_execution", str(e), {"query": query})
+        return json.dumps({
+            "success": False,
+            "error": f"Unexpected error in complex query: {str(e)}"
         })
 
 @skill(

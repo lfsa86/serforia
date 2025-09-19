@@ -4,6 +4,9 @@ Database Connection Manager - Handles SQL Server connections
 from typing import Dict, Any, Optional, List
 import os
 from dotenv import load_dotenv
+from decimal import Decimal
+from datetime import datetime, date
+import json
 
 load_dotenv()
 
@@ -13,6 +16,17 @@ class DatabaseConnectionManager:
     def __init__(self):
         self.connection_config = self._load_default_config()
         self.connection = None
+
+    def _serialize_value(self, value):
+        """Convert non-JSON serializable types to serializable ones"""
+        if isinstance(value, Decimal):
+            return float(value)
+        elif isinstance(value, (datetime, date)):
+            return value.isoformat()
+        elif value is None:
+            return None
+        else:
+            return value
 
     def _load_default_config(self) -> Dict[str, str]:
         """Load default connection configuration"""
@@ -106,12 +120,12 @@ class DatabaseConnectionManager:
                     columns = [column[0] for column in cursor.description] if cursor.description else []
                     rows = cursor.fetchall()
 
-                    # Convert to list of dictionaries
+                    # Convert to list of dictionaries with proper serialization
                     results = []
                     for row in rows:
                         row_dict = {}
                         for i, value in enumerate(row):
-                            row_dict[columns[i]] = value
+                            row_dict[columns[i]] = self._serialize_value(value)
                         results.append(row_dict)
 
                     return {

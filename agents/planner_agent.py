@@ -4,12 +4,14 @@ Planner Agent - Creates execution plans based on interpreted requests
 from typing import Dict, Any, List
 from .base_agent import BaseAgent
 from .task_manager import TaskManager, ExecutionTask
+from utils.logger import get_logger
 import json
 
 class PlannerAgent(BaseAgent):
     """Agent that creates step-by-step execution plans with task management"""
 
     def __init__(self):
+        self.logger = get_logger()
         super().__init__(
             name="Planner",
             role_setup="""Eres un agente planificador especializado en crear planes de ejecución para consultas sobre datos de SERFOR.
@@ -51,7 +53,8 @@ Ejemplo de formato:
     }
   ]
 }""",
-            temperature=0.3
+            temperature=0.3,
+            max_token=6000
         )
 
     def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -66,6 +69,23 @@ Ejemplo de formato:
         """
         interpretation = input_data.get("interpretation", "")
         user_query = input_data.get("user_query", "")
+        schema_info = input_data.get("schema_info", {})
+
+        # Format complete schema for planning
+        schema_details = ""
+        if schema_info and "tables" in schema_info:
+            schema_details = "\n🗄️ ESQUEMA COMPLETO DE BASE DE DATOS:\n"
+            for table_name, table_data in schema_info["tables"].items():
+                schema_details += f"\n📋 Tabla: {table_data.get('full_name', table_name)}\n"
+                schema_details += f"   Descripción: {table_data.get('description', 'Sin descripción')}\n"
+                schema_details += f"   Filas estimadas: {table_data.get('estimated_rows', 'Desconocido')}\n"
+                schema_details += f"   TODAS LAS COLUMNAS:\n"
+
+                # Include ALL columns with full details
+                for col in table_data.get('columns', []):
+                    col_desc = col.get('description', 'Sin descripción')
+                    nullable = "NULL" if col.get('nullable', True) else "NOT NULL"
+                    schema_details += f"     - {col['name']} ({col['type']}, {nullable}): {col_desc}\n"
 
         prompt = f"""
         Basándote en esta interpretación de la consulta del usuario:
@@ -74,22 +94,48 @@ Ejemplo de formato:
 
         Interpretación: {interpretation}
 
+        {schema_details}
+
+        🛠️ Skills disponibles para usar:
+        - execute_select_query: Ejecutar consultas SQL SELECT simples
+        - execute_complex_query: Ejecutar consultas complejas con JOINs entre tablas
+        - get_table_schemas: Obtener esquemas de tablas
+        - search_table_data: Buscar datos con filtros
+        - aggregate_table_data: Agregaciones (COUNT, SUM, AVG, MIN, MAX)
+        - count_table_rows: Contar filas de tablas
+        - get_table_sample: Obtener muestras de datos
+
+        🎯 ESTRATEGIAS DE CONSULTA:
+        - Para consultas que relacionan ambas tablas, crea UNA SOLA tarea con execute_complex_query
+        - NO separes JOINs en múltiples pasos - usa SQL completo
+        - NO inventes tablas temporales como "resultado_unido"
+        - Prefiere menos pasos con consultas más completas
+
         Crea un plan de ejecución detallado en formato JSON con los pasos necesarios para responder la consulta.
 
-        El plan debe considerar:
-        - Acceso a las tablas: Dir.T_GEP_INFRACTORES y Dir.T_GEP_TITULOHABILITANTE
-        - Validaciones necesarias
-        - Consultas SQL específicas
-        - Procesamiento de resultados
-        - Formato de presentación
+        IMPORTANTE:
+        - Usa las tablas y columnas REALES del esquema mostrado arriba
+        - Cada paso debe especificar exactamente qué columnas y tablas usar
+        - Usa el formato JSON especificado con step_id, description, action_type, parameters, dependencies y max_retries
+        - RESPONDE ÚNICAMENTE CON JSON VÁLIDO, SIN TEXTO ADICIONAL ANTES O DESPUÉS
+        - NO uses concatenación de strings con + dentro del JSON
+        - Escribe consultas SQL completas en UNA SOLA LÍNEA
+        - Para action_type usa solo: "validate", "query", "transform", "calculate", "aggregate", "format"
 
-        IMPORTANTE: Usa el formato JSON especificado con step_id, description, action_type, parameters, dependencies y max_retries.
+        EJEMPLO VÁLIDO:
+        {{"step_id": 1, "action_type": "query", "parameters": {{"query": "SELECT th.TX_NombreTitular FROM Dir.T_GEP_TITULOHABILITANTE th JOIN Dir.T_GEP_INFRACTORES i ON th.TX_NombreTitular = i.TX_Infractor WHERE th.TX_SituacionActual = 'vigente' AND i.NU_MultaUIT > 20"}}}}
         """
 
         response = self.run(prompt)
 
+        # Log the raw response from the agent
+        self.logger.log_agent_activity("planner", "raw_response_received", prompt, response)
+
+        # Clean and parse the response
+        cleaned_response = self._clean_json_response(response)
+
         # Create task manager and populate with tasks
-        task_manager = self.create_task_manager_from_plan(response)
+        task_manager = self.create_task_manager_from_plan(cleaned_response)
 
         return {
             "status": "planned",
@@ -113,9 +159,14 @@ Ejemplo de formato:
         task_manager = TaskManager()
 
         try:
+            # Log JSON parsing attempt
+            self.logger.log_json_parsing("planner", plan_json)
+
             # Parse JSON plan
             plan_data = json.loads(plan_json)
             steps = plan_data.get("steps", [])
+
+            self.logger.log_json_parsing("planner", plan_json, plan_data)
 
             # Create task mapping for dependencies
             step_id_to_task_id = {}
@@ -144,6 +195,10 @@ Ejemplo de formato:
                 step_id_to_task_id[step_id] = task_id
 
         except json.JSONDecodeError as e:
+            # Log JSON parsing error
+            self.logger.log_json_parsing("planner", plan_json, None, str(e))
+            self.logger.log_error("planner_json_parsing", str(e), {"raw_plan": plan_json})
+
             # Create fallback task if JSON parsing fails
             fallback_task = ExecutionTask(
                 description="Plan parsing failed - manual execution required",
@@ -155,3 +210,30 @@ Ejemplo de formato:
             task_manager.add_task(fallback_task)
 
         return task_manager
+
+    def _clean_json_response(self, response: str) -> str:
+        """Clean JSON response by removing markdown and other unwanted characters"""
+        import re
+
+        # Remove markdown code blocks
+        response = re.sub(r'```json\s*', '', response)
+        response = re.sub(r'```\s*', '', response)
+
+        # Remove leading/trailing whitespace
+        response = response.strip()
+
+        # Fix string concatenation issues (remove + operators in JSON strings)
+        # This regex finds and removes + concatenation within JSON strings
+        response = re.sub(r'"\s*\+\s*\n\s*"', '', response)
+        response = re.sub(r'"\s*\+\s*"', '', response)
+
+        # Find JSON content between first { and last }
+        start_idx = response.find('{')
+        end_idx = response.rfind('}')
+
+        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+            response = response[start_idx:end_idx + 1]
+
+        self.logger.log_agent_activity("planner", "json_cleaning", response, f"Cleaned to: {response}...")
+
+        return response

@@ -2,6 +2,7 @@
 Main entry point for the SERFOR multi-agent system
 """
 from agents.orchestrator import AgentOrchestrator
+from utils.logger import init_logger
 from dotenv import load_dotenv
 
 def main():
@@ -9,6 +10,10 @@ def main():
 
     # Load environment variables
     load_dotenv()
+
+    # Initialize logging system
+    logger = init_logger()
+    print(f"📝 Sistema de logging inicializado - Session ID: {logger.session_id}")
 
     # Initialize orchestrator
     print("🚀 Inicializando sistema multi-agente SERFOR...")
@@ -57,6 +62,11 @@ def main():
                 print(result["final_response"])
                 print("\n" + "="*60)
                 print(f"🤖 Agentes utilizados: {', '.join(result['agents_used'])}")
+
+                # Show logging information
+                log_summary = logger.get_session_summary()
+                print(f"📊 Session summary: {log_summary['queries_count']} queries, {log_summary['sql_queries_count']} SQL queries, {log_summary['errors_count']} errors")
+                print(f"📁 Logs guardados en: {log_summary['log_files']['detailed_log']}")
             else:
                 print(f"❌ Error procesando consulta: {result['error']}")
 

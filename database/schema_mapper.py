@@ -107,8 +107,13 @@ class DynamicSchemaMapper:
                 ORDER BY TABLE_SCHEMA, TABLE_NAME
                 """
 
-                for row in cursor.execute(tables_query):
+                # Use fetchall to get all tables first
+                table_rows = cursor.execute(tables_query).fetchall()
+
+                for row in table_rows:
                     schema_name, table_name, table_type = row
+
+                    print(f"  Processing table: {schema_name}.{table_name}")
 
                     # Discover columns for this table
                     columns = self._discover_table_columns(cursor, schema_name, table_name)
@@ -155,21 +160,30 @@ class DynamicSchemaMapper:
         ORDER BY ORDINAL_POSITION
         """
 
-        for row in cursor.execute(columns_query, schema_name, table_name):
-            col_name, data_type, is_nullable, max_length, precision, scale = row
+        try:
+            # Use fetchall to avoid cursor iteration issues
+            rows = cursor.execute(columns_query, schema_name, table_name).fetchall()
 
-            # Get sample values for this column
-            samples = self._get_sample_values(cursor, schema_name, table_name, col_name)
+            for row in rows:
+                col_name, data_type, is_nullable, max_length, precision, scale = row
 
-            column_info = ColumnInfo(
-                name=col_name,
-                data_type=data_type,
-                is_nullable=(is_nullable == 'YES'),
-                max_length=max_length,
-                sample_values=samples
-            )
+                # Get sample values for this column (limit to avoid long processing)
+                samples = self._get_sample_values(cursor, schema_name, table_name, col_name, limit=3)
 
-            columns.append(column_info)
+                column_info = ColumnInfo(
+                    name=col_name,
+                    data_type=data_type,
+                    is_nullable=(is_nullable == 'YES'),
+                    max_length=max_length,
+                    sample_values=samples
+                )
+
+                columns.append(column_info)
+
+            print(f"  Discovered {len(columns)} columns for {schema_name}.{table_name}")
+
+        except Exception as e:
+            print(f"  Error discovering columns for {schema_name}.{table_name}: {e}")
 
         return columns
 
@@ -245,8 +259,18 @@ class DynamicSchemaMapper:
         """
         enriched_tables = {}
 
+        if self.tables is None or len(self.tables) == 0:
+            print("No tables available for enrichment")
+            return enriched_tables
+
+        print(f"Starting enrichment for {len(self.tables)} tables...")
+
         for table_name, table_info in self.tables.items():
+            print(f"\n🔄 Processing table: {table_name} ({len(table_info.columns)} columns)")
+
             if table_info.ai_enriched:
+                print(f"  ⏭️ Skipping {table_name} - already enriched")
+                enriched_tables[table_name] = table_info
                 continue  # Skip already enriched tables
 
             # Prepare context for AI
@@ -278,23 +302,46 @@ class DynamicSchemaMapper:
 
             try:
                 response = ai_agent.run(prompt)
-                enrichment_data = json.loads(response)
+                print(f"  AI response for {table_name}: {response[:100]}...")
 
-                # Apply enrichments
-                if 'table_description' in enrichment_data:
-                    table_info.description = enrichment_data['table_description']
+                # Clean JSON response (remove backticks and code blocks)
+                cleaned_response = response.strip()
+                if cleaned_response.startswith('```json'):
+                    cleaned_response = cleaned_response[7:]
+                if cleaned_response.endswith('```'):
+                    cleaned_response = cleaned_response[:-3]
+                cleaned_response = cleaned_response.strip()
 
-                if 'column_descriptions' in enrichment_data:
-                    for col in table_info.columns:
-                        if col.name in enrichment_data['column_descriptions']:
-                            col.description = enrichment_data['column_descriptions'][col.name]
-                            col.ai_enriched = True
+                # Try to parse JSON response
+                try:
+                    enrichment_data = json.loads(cleaned_response)
 
-                table_info.ai_enriched = True
-                table_info.last_updated = datetime.now().isoformat()
+                    # Apply enrichments
+                    if 'table_description' in enrichment_data:
+                        table_info.description = enrichment_data['table_description']
+
+                    if 'column_descriptions' in enrichment_data:
+                        for col in table_info.columns:
+                            if col.name in enrichment_data['column_descriptions']:
+                                # Handle nested description format
+                                col_desc = enrichment_data['column_descriptions'][col.name]
+                                if isinstance(col_desc, dict) and 'description' in col_desc:
+                                    col.description = col_desc['description']
+                                elif isinstance(col_desc, str):
+                                    col.description = col_desc
+                                col.ai_enriched = True
+
+                    table_info.ai_enriched = True
+                    table_info.last_updated = datetime.now().isoformat()
+
+                except json.JSONDecodeError as je:
+                    print(f"  JSON parse error for {table_name}: {je}")
+                    print(f"  Cleaned response: {cleaned_response[:200]}...")
+                    # Set basic description fallback
+                    table_info.description = f"Tabla de datos SERFOR: {table_name}"
 
             except Exception as e:
-                print(f"Error enriching table {table_name}: {e}")
+                print(f"  Error enriching table {table_name}: {e}")
 
             enriched_tables[table_name] = table_info
 
