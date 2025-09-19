@@ -1,0 +1,11 @@
+# Core dependencies
+instantneo[openai]>=0.1.1
+python-dotenv>=1.0.0
+
+# Database connectivity
+pyodbc>=4.0.39
+
+# Development and testing
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0
