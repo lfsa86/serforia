@@ -8,6 +8,7 @@ from .executor_agent import ExecutorAgent
 from .response_agent import ResponseAgent
 from database.schema_mapper import DynamicSchemaMapper
 from utils.logger import get_logger
+from utils.debug_serializer import debug_workflow_data
 
 class AgentOrchestrator:
     """Orchestrates the workflow between all agents in the SERFOR system"""
@@ -42,12 +43,13 @@ class AgentOrchestrator:
             "response": self.response_agent
         }
 
-    def process_user_query(self, user_query: str) -> Dict[str, Any]:
+    def process_user_query(self, user_query: str, debug: bool = False) -> Dict[str, Any]:
         """
         Process a user query through the complete agent pipeline with task management
 
         Args:
             user_query: The user's natural language query
+            debug: Whether to run in debug mode
 
         Returns:
             Dictionary with the complete processing results
@@ -104,6 +106,24 @@ class AgentOrchestrator:
             response_result = self.response_agent.process(workflow_data)
             self.logger.log_agent_activity("response", "process_completed", workflow_data, response_result)
             workflow_data.update(response_result)
+
+            # Debug file for workflow_data and execution_result if needed
+            if debug:
+                try:
+                    # Use safe serialization for complex objects
+                    workflow_debug_file = debug_workflow_data(workflow_data, user_query)
+                    print(f"🐛 Debug workflow data saved to: {workflow_debug_file}")
+
+                    # Also save execution result safely
+                    from utils.debug_serializer import safe_json_dump
+                    safe_json_dump(execution_result, "debug/execution_result_debug.json")
+                    print(f"🐛 Debug execution result saved to: debug/execution_result_debug.json")
+
+                except Exception as debug_error:
+                    print(f"⚠️ Debug save failed: {debug_error}")
+                    self.logger.log_error("debug_serialization", str(debug_error), {"workflow_data_keys": list(workflow_data.keys()) if isinstance(workflow_data, dict) else []})
+
+
 
             return {
                 "success": True,

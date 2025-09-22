@@ -110,6 +110,8 @@ Ejemplo de formato:
         - NO separes JOINs en múltiples pasos - usa SQL completo
         - NO inventes tablas temporales como "resultado_unido"
         - Prefiere menos pasos con consultas más completas
+        - NO crear tareas de tipo "format" - el formateo es responsabilidad del Response Agent
+        - Los action_types válidos para el Executor son: "validate", "query", "transform", "calculate", "aggregate"
 
         Crea un plan de ejecución detallado en formato JSON con los pasos necesarios para responder la consulta.
 
@@ -120,7 +122,7 @@ Ejemplo de formato:
         - RESPONDE ÚNICAMENTE CON JSON VÁLIDO, SIN TEXTO ADICIONAL ANTES O DESPUÉS
         - NO uses concatenación de strings con + dentro del JSON
         - Escribe consultas SQL completas en UNA SOLA LÍNEA
-        - Para action_type usa solo: "validate", "query", "transform", "calculate", "aggregate", "format"
+        - Para action_type usa solo: "validate", "query", "transform", "calculate", "aggregate" (NO "format")
 
         EJEMPLO VÁLIDO:
         {{"step_id": 1, "action_type": "query", "parameters": {{"query": "SELECT th.TX_NombreTitular FROM Dir.T_GEP_TITULOHABILITANTE th JOIN Dir.T_GEP_INFRACTORES i ON th.TX_NombreTitular = i.TX_Infractor WHERE th.TX_SituacionActual = 'vigente' AND i.NU_MultaUIT > 20"}}}}

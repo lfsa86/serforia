@@ -249,6 +249,10 @@ Si encuentras errores, describe específicamente qué falló y por qué.""",
         elif task.action_type == "aggregate":
             return base_prompt + "\nAgrega los datos según los parámetros. Retorna el resumen agregado."
 
+        elif task.action_type == "format":
+            # Format tasks should not be handled by executor - skip and mark as failed
+            return "ERROR: Las tareas de tipo 'format' deben ser manejadas por el Response Agent, no el Executor."
+
         else:
             return base_prompt + "\nEjecuta la operación especificada y retorna el resultado."
 

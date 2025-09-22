@@ -20,12 +20,12 @@ def main():
     orchestrator = AgentOrchestrator()
 
     # Test agents
-    print("\n🔧 Probando conectividad de agentes...")
-    test_results = orchestrator.test_agents()
+    # print("\n🔧 Probando conectividad de agentes...")
+    # test_results = orchestrator.test_agents()
 
-    for agent_name, is_working in test_results.items():
-        status = "✅ OK" if is_working else "❌ ERROR"
-        print(f"  {agent_name}: {status}")
+    # for agent_name, is_working in test_results.items():
+    #     status = "✅ OK" if is_working else "❌ ERROR"
+    #     print(f"  {agent_name}: {status}")
 
     # Show agent info
     print("\n📊 Información de agentes:")
