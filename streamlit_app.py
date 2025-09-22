@@ -98,6 +98,64 @@ def format_results_for_display(result_data):
             mime="text/csv"
         )
 
+        # Execute visualizations if available
+        viz_code_blocks = result_data.get("workflow_data", {}).get("visualization_code_blocks", [])
+        if viz_code_blocks:
+            with st.expander("📈 Ver Visualizaciones", expanded=True):
+                try:
+                    # Execute visualization code blocks
+                    from agents.visualization_agent import VisualizationAgent
+                    viz_agent = VisualizationAgent()
+                    viz_result = viz_agent.execute_visualization_code(viz_code_blocks, df)
+
+                    if not viz_result.get("success", False):
+                        st.warning("No se pudieron generar todas las visualizaciones")
+
+                except Exception as e:
+                    st.error(f"Error ejecutando visualizaciones: {str(e)}")
+                    import traceback
+                    st.code(traceback.format_exc())
+
+    # Display SQL queries executed (if any)
+    execution_results = result_data.get("workflow_data", {}).get("execution_results", [])
+    sql_queries = []
+
+    for result in execution_results:
+        if result.get("status") == "success" and isinstance(result.get("result"), str):
+            try:
+                parsed_result = json.loads(result["result"])
+                if "query_executed" in parsed_result:
+                    sql_queries.append({
+                        "query": parsed_result["query_executed"],
+                        "success": parsed_result.get("success", False),
+                        "row_count": parsed_result.get("row_count", 0),
+                        "task_description": result.get("task_description", "Consulta SQL")
+                    })
+                elif "query_attempted" in parsed_result:
+                    sql_queries.append({
+                        "query": parsed_result["query_attempted"],
+                        "success": False,
+                        "error": parsed_result.get("error", "Error desconocido"),
+                        "task_description": result.get("task_description", "Consulta SQL")
+                    })
+            except:
+                continue
+
+    if sql_queries:
+        with st.expander("🔍 Ver Queries SQL Ejecutadas", expanded=False):
+            for i, sql_info in enumerate(sql_queries, 1):
+                st.markdown(f"**Query {i}: {sql_info['task_description']}**")
+
+                if sql_info['success']:
+                    st.success(f"✅ Exitosa - {sql_info.get('row_count', 0)} filas devueltas")
+                else:
+                    st.error(f"❌ Error: {sql_info.get('error', 'Error desconocido')}")
+
+                st.code(sql_info['query'], language='sql')
+
+                if i < len(sql_queries):
+                    st.divider()
+
     # Display formatted response
     st.subheader("📝 Resumen Detallado")
 

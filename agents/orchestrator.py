@@ -1,11 +1,13 @@
 """
 Orchestrator - Coordinates the multi-agent system workflow
 """
+import json
 from typing import Dict, Any
 from .interpreter_agent import InterpreterAgent
 from .planner_agent import PlannerAgent
 from .executor_agent import ExecutorAgent
 from .response_agent import ResponseAgent
+from .visualization_agent import VisualizationAgent
 from database.schema_mapper import DynamicSchemaMapper
 from utils.logger import get_logger
 from utils.debug_serializer import debug_workflow_data
@@ -35,12 +37,14 @@ class AgentOrchestrator:
         self.planner = PlannerAgent()
         self.executor = ExecutorAgent()
         self.response_agent = ResponseAgent()
+        self.visualization_agent = VisualizationAgent()
 
         self.agents = {
             "interpreter": self.interpreter,
             "planner": self.planner,
             "executor": self.executor,
-            "response": self.response_agent
+            "response": self.response_agent,
+            "visualization": self.visualization_agent
         }
 
     def process_user_query(self, user_query: str, debug: bool = False) -> Dict[str, Any]:
@@ -106,6 +110,30 @@ class AgentOrchestrator:
             response_result = self.response_agent.process(workflow_data)
             self.logger.log_agent_activity("response", "process_completed", workflow_data, response_result)
             workflow_data.update(response_result)
+
+            # Step 5: Generate visualizations if applicable
+            # Try to extract tables from the response
+            execution_results = workflow_data.get("execution_results", [])
+
+            # Look for successful query results
+            query_results = None
+            for result in execution_results:
+                if result.get("status") == "success" and isinstance(result.get("result"), str):
+                    try:
+                        # Try to parse JSON result from skills
+                        parsed_result = json.loads(result["result"])
+                        if parsed_result.get("success") and "data" in parsed_result:
+                            query_results = parsed_result["data"]
+                            break
+                    except:
+                        continue
+
+            if query_results and len(query_results) > 0:
+                print("📊 Generando visualizaciones...")
+                self.logger.log_agent_activity("orchestrator", "starting_visualization_generation", {"query_results": query_results, "user_query": user_query})
+                visualization_result = self.visualization_agent.process({"query_results": query_results, "user_query": user_query})
+                self.logger.log_agent_activity("visualization", "process_completed", {"query_results": query_results, "user_query": user_query}, visualization_result)
+                workflow_data.update(visualization_result)
 
             # Debug file for workflow_data and execution_result if needed
             if debug:
