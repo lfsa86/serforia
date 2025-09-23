@@ -184,7 +184,7 @@ def main():
     # Query input
     query = st.text_area(
         "Escribe tu consulta sobre datos forestales:",
-        placeholder="Ejemplo: Necesito identificar a los titulares que tienen títulos habilitantes vigentes y que, además, cuentan con infracciones sancionadas con multas mayores a 20 UIT.",
+        placeholder="Escribe tu consulta aquí...",
         height=100
     )
 

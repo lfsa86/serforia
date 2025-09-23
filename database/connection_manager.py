@@ -151,7 +151,7 @@ class DatabaseConnectionManager:
 
     def execute_query_safely(self, query: str, max_rows: int = 1000) -> Dict[str, Any]:
         """
-        Execute query with safety limits
+        Execute query with safety limits and SQL Server syntax conversion
 
         Args:
             query: SQL query
@@ -160,12 +160,54 @@ class DatabaseConnectionManager:
         Returns:
             Query results with safety checks
         """
-        # Add row limit to SELECT queries
-        if query.strip().upper().startswith('SELECT') and 'TOP' not in query.upper():
-            # Simple approach: add TOP clause
-            query = query.replace('SELECT', f'SELECT TOP {max_rows}', 1)
+        # Convert MySQL/PostgreSQL syntax to SQL Server
+        query = self._convert_to_sqlserver_syntax(query, max_rows)
 
         return self.execute_query(query)
+
+    def _convert_to_sqlserver_syntax(self, query: str, max_rows: int = 1000) -> str:
+        """
+        Convert MySQL/PostgreSQL syntax to SQL Server syntax
+
+        Args:
+            query: Original SQL query
+            max_rows: Maximum rows for TOP clause
+
+        Returns:
+            Query converted to SQL Server syntax
+        """
+        import re
+
+        # Convert LIMIT to TOP
+        if 'LIMIT' in query.upper():
+            # Pattern: LIMIT N or LIMIT N OFFSET M
+            limit_pattern = r'\s+LIMIT\s+(\d+)(?:\s+OFFSET\s+(\d+))?'
+            match = re.search(limit_pattern, query, re.IGNORECASE)
+
+            if match:
+                limit_num = match.group(1)
+                offset_num = match.group(2)
+
+                if offset_num:
+                    # LIMIT N OFFSET M -> OFFSET M ROWS FETCH NEXT N ROWS ONLY
+                    # Remove LIMIT clause
+                    query = re.sub(limit_pattern, '', query, flags=re.IGNORECASE)
+                    # Add ORDER BY if not present (required for OFFSET)
+                    if 'ORDER BY' not in query.upper():
+                        query = query.rstrip(';') + ' ORDER BY (SELECT NULL)'
+                    query += f' OFFSET {offset_num} ROWS FETCH NEXT {limit_num} ROWS ONLY'
+                else:
+                    # LIMIT N -> TOP N
+                    # Remove LIMIT clause
+                    query = re.sub(limit_pattern, '', query, flags=re.IGNORECASE)
+                    # Add TOP clause
+                    query = query.replace('SELECT', f'SELECT TOP {limit_num}', 1)
+
+        # Add TOP if no limit specified and it's a SELECT
+        elif query.strip().upper().startswith('SELECT') and 'TOP' not in query.upper() and 'OFFSET' not in query.upper():
+            query = query.replace('SELECT', f'SELECT TOP {max_rows}', 1)
+
+        return query
 
     def get_table_sample(self, schema: str, table: str, limit: int = 10) -> Dict[str, Any]:
         """Get a sample of data from a table"""

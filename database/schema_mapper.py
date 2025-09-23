@@ -366,7 +366,8 @@ class DynamicSchemaMapper:
                 "total_tables": len(self.tables),
                 "last_discovery": max([t.last_updated for t in self.tables.values()]) if self.tables else None
             },
-            "tables": {}
+            "tables": {},
+            "relationships": self._get_table_relationships()
         }
 
         for table_name in tables_to_include:
@@ -389,6 +390,28 @@ class DynamicSchemaMapper:
                 }
 
         return schema_info
+
+    def _get_table_relationships(self) -> Dict[str, Any]:
+        """
+        Define known table relationships for AI agents
+
+        Returns:
+            Dictionary mapping relationship descriptions to JOIN conditions
+        """
+        return {
+            "infractores_to_titulo_habilitante_by_codigo": {
+                "description": "Relacionar infractores con títulos habilitantes por código",
+                "join_condition": "T_GEP_INFRACTORES.TX_TituloHabilitante = T_GEP_TITULOHABILITANTE.TX_CodigoContrato",
+                "tables": ["T_GEP_INFRACTORES", "T_GEP_TITULOHABILITANTE"],
+                "relationship_type": "many_to_one"
+            },
+            "infractores_to_titulo_habilitante_by_titular": {
+                "description": "Relacionar infractores con títulos habilitantes por nombre del titular",
+                "join_condition": "T_GEP_INFRACTORES.TX_TitDeTitHab = T_GEP_TITULOHABILITANTE.TX_NombreTitular",
+                "tables": ["T_GEP_INFRACTORES", "T_GEP_TITULOHABILITANTE"],
+                "relationship_type": "many_to_one"
+            }
+        }
 
     def _load_cache(self):
         """Load cached schema information"""

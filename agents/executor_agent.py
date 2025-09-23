@@ -59,6 +59,14 @@ TABLAS DISPONIBLES:
 - Dir.T_GEP_INFRACTORES: Información de infracciones forestales
 - Dir.T_GEP_TITULOHABILITANTE: Información de títulos habilitantes
 
+IMPORTANTE - SINTAXIS SQL SERVER:
+- USA 'TOP N' en lugar de 'LIMIT N'
+- Para paginación: 'OFFSET X ROWS FETCH NEXT Y ROWS ONLY'
+- NO combines TOP con OFFSET en la misma query
+- Ejemplos correctos:
+  * SELECT TOP 10 * FROM tabla ORDER BY columna
+  * SELECT * FROM tabla ORDER BY columna OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY
+
 ESTRATEGIA PARA CONSULTAS COMPLEJAS:
 - Para consultas que requieren relacionar ambas tablas, usa execute_complex_query
 - Construye queries SQL completas con JOINs en lugar de múltiples pasos
@@ -127,11 +135,7 @@ Si encuentras errores, describe específicamente qué falló y por qué.""",
         # Get final summary
         execution_summary = task_manager.get_execution_summary()
 
-        # Handle failed tasks with recovery
-        if not execution_summary["is_complete"] or execution_summary["status_counts"]["failed"] > 0:
-            print("⚠️ Intentando recuperación de tareas fallidas...")
-            recovery_result = self.attempt_recovery(task_manager)
-            execution_results.extend(recovery_result)
+        # Note: Recovery is now handled automatically via retry context in generate_task_prompt
 
         return {
             "status": "executed",
@@ -224,13 +228,27 @@ Si encuentras errores, describe específicamente qué falló y por qué.""",
         return any(indicator in response for indicator in error_indicators)
 
     def generate_task_prompt(self, task: ExecutionTask) -> str:
-        """Generate appropriate prompt for task execution"""
+        """Generate appropriate prompt for task execution with retry context"""
         base_prompt = f"""
         Ejecuta la siguiente tarea:
 
         Descripción: {task.description}
         Tipo de acción: {task.action_type}
         Parámetros: {task.parameters}
+        """
+
+        # Add retry context if this is not the first attempt
+        if task.retry_count > 0:
+            base_prompt += f"""
+
+        IMPORTANTE - INTENTO #{task.retry_count + 1}:
+        Tu intento anterior falló con el siguiente error:
+        {task.error_message}
+
+        Cambia tu estrategia para evitar el mismo error. Considera:
+        - Usar una skill diferente
+        - Simplificar la consulta
+        - Probar un enfoque alternativo
         """
 
         # Customize prompt based on action type

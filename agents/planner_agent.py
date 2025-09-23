@@ -14,6 +14,7 @@ class PlannerAgent(BaseAgent):
         self.logger = get_logger()
         super().__init__(
             name="Planner",
+            model="gpt-4o",
             role_setup="""Eres un agente planificador especializado en crear planes de ejecución para consultas sobre datos de SERFOR.
 
 Basándote en la interpretación de la consulta del usuario, debes crear un plan paso a paso que incluya:
@@ -105,11 +106,29 @@ Ejemplo de formato:
         - count_table_rows: Contar filas de tablas
         - get_table_sample: Obtener muestras de datos
 
-        🎯 ESTRATEGIAS DE CONSULTA:
-        - Para consultas que relacionan ambas tablas, crea UNA SOLA tarea con execute_complex_query
-        - NO separes JOINs en múltiples pasos - usa SQL completo
+        IMPORTANTE - BASE DE DATOS SQL SERVER:
+        - Para consultas que requieren TOP/LIMIT: usar 'TOP N' (ej: SELECT TOP 1 ...)
+        - Para paginación: usar 'OFFSET X ROWS FETCH NEXT Y ROWS ONLY'
+        - NO usar sintaxis MySQL/PostgreSQL como LIMIT
+        - Ejemplos: 'TOP 10', 'TOP 1', 'OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY'
+
+        🎯 ESTRATEGIAS DE CONSULTA (PRIORIZAR SIMPLICIDAD):
+
+        1. EVALÚA PRIMERO SI PUEDES USAR UNA SOLA TABLA:
+           - Para consultas sobre superficie/departamento: T_GEP_TITULOHABILITANTE tiene TX_Departamento,TX_Provincia,TX_Distrito y NU_Superficie
+           - Para consultas sobre dispositivos legales: T_GEP_INFRACTORES tiene TX_DispositivoLegal
+           - Para consultas sobre multas: T_GEP_INFRACTORES tiene NU_MultaUIT (si es mayor a 0 es que hay multa)
+           - Para consultas sobre infractores: T_GEP_INFRACTORES tiene TX_Infractor y TX_TitDeTitHab
+
+        2. SI NECESITAS RELACIONAR AMBAS TABLAS (JOINs VÁLIDOS):
+           - Relación: T_GEP_INFRACTORES.TX_TituloHabilitante = T_GEP_TITULOHABILITANTE.TX_CodigoContrato
+           - Relación: T_GEP_INFRACTORES.TX_TitDeTitHab = T_GEP_TITULOHABILITANTE.TX_NombreTitular
+           - Para JOINs usa execute_complex_query con SQL completo
+           - NO separes JOINs en múltiples pasos
+
+        3. REGLAS GENERALES:
         - NO inventes tablas temporales como "resultado_unido"
-        - Prefiere menos pasos con consultas más completas
+        - Prefiere menos pasos con consultas más simples
         - NO crear tareas de tipo "format" - el formateo es responsabilidad del Response Agent
         - Los action_types válidos para el Executor son: "validate", "query", "transform", "calculate", "aggregate"
 

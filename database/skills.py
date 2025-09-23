@@ -248,7 +248,7 @@ def search_table_data(schema_name: str, table_name: str, filters: str, limit: in
                 "data": result["data"],
                 "columns": result["columns"],
                 "row_count": result["row_count"],
-                "query_used": query,
+                "query_executed": query,
                 "filters_applied": filter_dict
             })
         else:
@@ -350,7 +350,7 @@ def aggregate_table_data(
                     "column": column_name,
                     "group_by": group_by
                 },
-                "query_used": query
+                "query_executed": query
             })
         else:
             return json.dumps({

@@ -3,6 +3,7 @@ Response Agent - Formats and presents final results to the user
 """
 from typing import Dict, Any
 from .base_agent import BaseAgent
+import json
 
 class ResponseAgent(BaseAgent):
     """Agent that formats execution results into user-friendly responses"""
