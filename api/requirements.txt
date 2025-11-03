@@ -1,0 +1,23 @@
+# FastAPI and server
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Core dependencies
+instantneo[openai]>=0.1.1
+python-dotenv>=1.0.0
+
+# Database connectivity
+pyodbc>=4.0.39
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# CORS and middleware
+python-multipart>=0.0.6
+
+# Testing
+pytest>=7.4.0
+httpx>=0.25.0

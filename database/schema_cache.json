@@ -1,0 +1,549 @@
+{
+  "T_GEP_INFRACTORES": {
+    "name": "T_GEP_INFRACTORES",
+    "schema": "Dir",
+    "description": "",
+    "columns": [
+      {
+        "name": "NU_idExpediente",
+        "data_type": "int",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "1027",
+          "1028",
+          "1029"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_Infractor",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 150,
+        "description": "",
+        "sample_values": [
+          "ACEVES PEDRO MERCADO BASTIDAS",
+          "ACHA CALLA ALIPIO",
+          "ACUÑA DELGADO HECTOR ALFREDO"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_TipoDocumento",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 400,
+        "description": "",
+        "sample_values": [
+          "DNI",
+          "RUC"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_NumeroDocumento",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 20,
+        "description": "",
+        "sample_values": [
+          "00000000000",
+          "00004665"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_TituloHabilitante",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 200,
+        "description": "",
+        "sample_values": [
+          "01-AMA/P-MAD-DEGBFS-011-2015",
+          "01-AMA/PER-FMC-2016-003",
+          "01-AMA/PER-FMC-2016-004"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_Resolucion",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 180,
+        "description": "",
+        "sample_values": [
+          "00002-2021-OSINFOR/08.2",
+          "00002-2022-OSINFOR/08.2",
+          "00003-2021-OSINFOR/08.2"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "FE_FechaResolucion",
+        "data_type": "datetime",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "2014-05-08 00:00:00",
+          "2014-07-04 00:00:00",
+          "2017-10-02 00:00:00"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_TitDeTitHab",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 200,
+        "description": "",
+        "sample_values": [
+          "22-SAM/P-MAD-D-013-2010",
+          "ACEVES PEDRO MERCADO BASTIDAS",
+          "ACHA CALLA ALIPIO"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_OrganoSancionador",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 50,
+        "description": "",
+        "sample_values": [
+          "ARFFS",
+          "OSINFOR"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_AmbitoInfraccion",
+        "data_type": "nvarchar",
+        "is_nullable": true,
+        "max_length": 80,
+        "description": "",
+        "sample_values": [
+          "ATFFS LIMA",
+          "ATFFS SELVA CENTRAL",
+          "GORE LORETO"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_DispositivoLegal",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 1000,
+        "description": "",
+        "sample_values": [
+          "Ley Forestal y de Fauna Silvestre - 27308",
+          "Ley Forestal y de Fauna Silvestre - 29763"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_TipoReglamento",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 1000,
+        "description": "",
+        "sample_values": [
+          "Causales de caducidad de los títulos habilitantes",
+          "Decreto Supremo Nº 014 – 2001 – AG"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_Articulo",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 50,
+        "description": "",
+        "sample_values": [
+          "137",
+          "153",
+          "18"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_Numeral",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 50,
+        "description": "",
+        "sample_values": [
+          "0",
+          "1",
+          "10"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_TipoInfraccion",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 50,
+        "description": "",
+        "sample_values": [
+          "1",
+          "10",
+          "11"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "NU_MultaUIT",
+        "data_type": "numeric",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "0.000",
+          "0.053",
+          "0.062"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "FE_FECHA_CARGA",
+        "data_type": "datetime",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "2025-09-03 12:12:18.917000",
+          "2025-09-03 12:12:18.943000"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      }
+    ],
+    "primary_keys": [],
+    "foreign_keys": {},
+    "indexes": [],
+    "row_count_estimate": 2687,
+    "ai_enriched": false,
+    "last_updated": "2025-10-29T14:34:56.349712"
+  },
+  "T_GEP_TITULOHABILITANTE": {
+    "name": "T_GEP_TITULOHABILITANTE",
+    "schema": "Dir",
+    "description": "",
+    "columns": [
+      {
+        "name": "TX_TipoTH",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 14,
+        "description": "",
+        "sample_values": [
+          "AUTORIZACIONES",
+          "BOSQUE LOCAL",
+          "CAMBIO DE USO"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_NombreTitular",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 200,
+        "description": "",
+        "sample_values": [
+          " PIETRO CUCCIO PELLEGRINI",
+          "\" ASOCIACION DE PRODUCTORES AGROFORESTALES PUCALLPILLO \""
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_CodigoContrato",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 500,
+        "description": "",
+        "sample_values": [
+          "' 22-SAM/CTO-SAG-2024-401",
+          "001-2014-GRA/ARA/DEGBFS/D",
+          "001-2015-GRA/ARA/DEGBFS/D"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_Ubigeo",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 6,
+        "description": "",
+        "sample_values": [
+          "010105",
+          "010109",
+          "010111"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_Departamento",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 255,
+        "description": "",
+        "sample_values": [
+          "AMAZONAS",
+          "ANCASH",
+          "APURIMAC"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_Provincia",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 255,
+        "description": "",
+        "sample_values": [
+          "ABANCAY",
+          "ALTO AMAZONAS",
+          "ANDAHUAYLAS"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_Distrito",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 255,
+        "description": "",
+        "sample_values": [
+          "ABANCAY",
+          "ACHOMA",
+          "ACOBAMBA"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "NU_Superficie",
+        "data_type": "numeric",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "0.0000",
+          "0.0100",
+          "0.0200"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "FE_FechaIniVigencia",
+        "data_type": "date",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "1992-03-07",
+          "2000-06-20",
+          "2001-07-24"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "FE_FechaFinVigencia",
+        "data_type": "date",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "1993-03-07",
+          "2001-06-20",
+          "2002-03-07"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_DocLeg",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 400,
+        "description": "",
+        "sample_values": [
+          "\tRA N° 216-2015-SERFOR-ATFFS-SELVA CENTRAL",
+          "\tRA N° 275-2019-MINAGRI-SERFOR-ATFFS SEC",
+          " 007-2021-GOREMAD-GRFFS-SO-MANU"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "FE_FechaLeg",
+        "data_type": "date",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "2000-06-20",
+          "2001-01-01",
+          "2001-07-24"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "NU_AnioLeg",
+        "data_type": "int",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "2000",
+          "2001",
+          "2002"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_TipoConcesion",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 250,
+        "description": "",
+        "sample_values": [
+          "CONSERVACIÓN",
+          "ECOTURISMO"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_CategoriaPermiso",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 250,
+        "description": "",
+        "sample_values": [
+          "BOSQUE SECO",
+          "FAUNA SILVESTRE"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_OtorgaPermiso",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 250,
+        "description": "",
+        "sample_values": [
+          "COMUNIDAD CAMPESINA",
+          "COMUNIDAD NATIVA"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_SituacionActual",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 50,
+        "description": "",
+        "sample_values": [
+          "EXTINGUIDO",
+          "NO VIGENTE",
+          "OBSERVADO"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_TipoDocumento",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 250,
+        "description": "",
+        "sample_values": [
+          "CARNET EXTRANJERIA",
+          "DNI",
+          "DNI/RUC"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_NumeroDocumento",
+        "data_type": "varchar",
+        "is_nullable": true,
+        "max_length": 50,
+        "description": "",
+        "sample_values": [
+          "0",
+          "00000629"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "TX_AutoridadForestal",
+        "data_type": "nvarchar",
+        "is_nullable": true,
+        "max_length": 4000,
+        "description": "",
+        "sample_values": [
+          "ATFFS ANCASH",
+          "ATFFS APURIMAC",
+          "ATFFS AREQUIPA"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      },
+      {
+        "name": "FE_FECHA_CARGA",
+        "data_type": "datetime",
+        "is_nullable": true,
+        "max_length": null,
+        "description": "",
+        "sample_values": [
+          "2025-09-03 11:47:17.440000",
+          "2025-09-03 11:47:17.463000",
+          "2025-09-03 11:47:17.483000"
+        ],
+        "constraints": [],
+        "ai_enriched": false
+      }
+    ],
+    "primary_keys": [],
+    "foreign_keys": {},
+    "indexes": [],
+    "row_count_estimate": 10031,
+    "ai_enriched": false,
+    "last_updated": "2025-10-29T14:34:57.016329"
+  }
+}

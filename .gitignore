@@ -13,3 +13,22 @@ build/
 .env
 logs/
 debug/
+
+# API (FastAPI backend)
+api/__pycache__/
+api/**/__pycache__/
+api/.env
+api/*.log
+
+# Client (React frontend)
+client/node_modules/
+client/dist/
+client/build/
+client/.env
+client/.env.local
+client/.env.production
+client/.vite/
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+client/pnpm-debug.log*

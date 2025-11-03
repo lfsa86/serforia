@@ -22,7 +22,44 @@ class AgentOrchestrator:
 
         # Load schema information
         self.schema_mapper = DynamicSchemaMapper()
+
+        # Try to load from cache first, if not available, discover from DB
         self.schema_info = self.schema_mapper.get_schema_for_ai()
+
+        # If no schema loaded, try to discover from database
+        if not self.schema_info.get('tables') or len(self.schema_info.get('tables', {})) == 0:
+            self.logger.log_agent_activity(
+                "orchestrator",
+                "schema_discovery",
+                None,
+                "No cached schema found, attempting to discover from database"
+            )
+            print("🔍 No hay cache de esquema, descubriendo desde la base de datos...")
+
+            try:
+                import os
+                from database.connection_manager import DatabaseConnectionManager
+
+                # Get database connection
+                db_manager = DatabaseConnectionManager()
+                conn_string = db_manager.get_connection_string()
+
+                # Discover schema
+                self.schema_mapper.discover_schema(conn_string)
+                self.schema_info = self.schema_mapper.get_schema_for_ai()
+
+                # Save to cache for future use
+                self.schema_mapper._save_cache()
+
+                print(f"✅ Esquema descubierto y guardado en cache")
+            except Exception as e:
+                self.logger.log_agent_activity(
+                    "orchestrator",
+                    "schema_discovery_error",
+                    None,
+                    f"Error discovering schema: {str(e)}"
+                )
+                print(f"⚠️ Error al descubrir esquema: {str(e)}")
 
         self.logger.log_agent_activity(
             "orchestrator",
