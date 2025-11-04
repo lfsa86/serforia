@@ -1,5 +1,6 @@
 # python env
 venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
@@ -13,6 +14,7 @@ build/
 .env
 logs/
 debug/
+.python-version
 
 # API (FastAPI backend)
 api/__pycache__/

@@ -1,73 +1,179 @@
-# React + TypeScript + Vite
+# SERFOR Client - React Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación web React + Vite para interactuar con la API de consultas en lenguaje natural de SERFOR.
 
-Currently, two official plugins are available:
+## Requisitos Previos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 18.x o superior
+- npm (incluido con Node.js)
+- API backend corriendo en http://localhost:8000
 
-## React Compiler
+### Instalar Node.js
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Windows:**
+Descarga el instalador desde: https://nodejs.org/
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+**macOS:**
+```bash
+brew install node
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+**Linux (Ubuntu/Debian):**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Instalación
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Navega a la carpeta del cliente:
+```bash
+cd client
+```
+
+2. Instala las dependencias:
+```bash
+npm install
+```
+
+## Configuración
+
+1. Crea un archivo `.env` en la carpeta `client/` (opcional):
+
+```env
+VITE_API_URL=http://localhost:8000/api
+```
+
+Si no creas este archivo, la aplicación usará la URL por defecto configurada en el código.
+
+## Ejecución
+
+### Modo Desarrollo
+
+```bash
+npm run dev
+```
+
+La aplicación estará disponible en: http://localhost:5173
+
+### Build para Producción
+
+```bash
+npm run build
+```
+
+Los archivos optimizados se generarán en la carpeta `dist/`.
+
+### Preview del Build
+
+```bash
+npm run preview
+```
+
+## Estructura del Proyecto
+
+```
+client/
+├── src/
+│   ├── components/    # Componentes React
+│   ├── services/      # Servicios API
+│   ├── App.tsx        # Componente principal
+│   └── main.tsx       # Punto de entrada
+├── public/            # Archivos estáticos
+├── index.html         # HTML base
+├── package.json       # Dependencias y scripts
+├── vite.config.ts     # Configuración de Vite
+├── tsconfig.json      # Configuración de TypeScript
+└── README.md          # Esta documentación
+```
+
+## Scripts Disponibles
+
+```bash
+# Iniciar servidor de desarrollo
+npm run dev
+
+# Compilar para producción
+npm run build
+
+# Preview del build de producción
+npm run preview
+
+# Linting del código
+npm run lint
+```
+
+## Tecnologías Utilizadas
+
+- **React 19** - Framework de UI
+- **TypeScript** - Tipado estático
+- **Vite** - Build tool y dev server
+- **Axios** - Cliente HTTP
+- **React Markdown** - Renderizado de markdown
+- **Lucide React** - Íconos
+
+## Configuración de CORS
+
+Asegúrate de que la API backend tenga configurado CORS para permitir conexiones desde el cliente. En el archivo `.env` de la API, debe incluir:
+
+```env
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+```
+
+## Troubleshooting
+
+### Error de conexión a la API
+- Verifica que la API esté corriendo en http://localhost:8000
+- Revisa la configuración de `VITE_API_URL` en el archivo `.env`
+- Confirma la configuración de CORS en el backend
+
+### Puerto 5173 en uso
+```bash
+# El dev server de Vite automáticamente usará el siguiente puerto disponible
+# O puedes especificar un puerto diferente:
+npm run dev -- --port 3000
+```
+
+### Errores de TypeScript
+```bash
+# Verifica los tipos
+npx tsc --noEmit
+
+# Reinstala las dependencias
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Problemas con dependencias
+```bash
+# Limpia caché de npm
+npm cache clean --force
+
+# Reinstala todo
+rm -rf node_modules package-lock.json
+npm install
+```
+
+## Desarrollo
+
+### Agregar nueva dependencia
+
+```bash
+npm install nombre-paquete
+```
+
+### Agregar dependencia de desarrollo
+
+```bash
+npm install -D nombre-paquete
+```
+
+## Build y Deployment
+
+Para producción, después de ejecutar `npm run build`, puedes servir los archivos estáticos de la carpeta `dist/` con cualquier servidor web (Nginx, Apache, etc.) o servicios como Vercel, Netlify, etc.
+
+Ejemplo con un servidor estático simple:
+```bash
+npm install -g serve
+serve -s dist -p 80
 ```

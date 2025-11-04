@@ -35,18 +35,12 @@ debug/
 .gitignore
 
 # Docker
-Dockerfile
 docker-compose.yml
-.dockerignore
 
 # Documentation
 *.md
 README*.md
 DOCUMENTACION_PROYECTO.md
-
-# Database files (already mounted as volume)
-*.sql
-init/
 
 # Test files
 test_*.py

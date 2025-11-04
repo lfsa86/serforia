@@ -14,10 +14,10 @@ class Settings(BaseSettings):
     API_RELOAD: bool = True
 
     # Database Settings
-    DB_SERVER: str
+    DB_SERVER: str = "localhost"
     DB_PORT: int = 1433
-    DB_DATABASE: str
-    DB_USERNAME: str
+    DB_DATABASE: str = "SERFOR_BDDWH"
+    DB_USERNAME: str = "sa"
     DB_PASSWORD: str
     DB_DRIVER: str = "ODBC Driver 18 for SQL Server"
     DB_TRUST_CERT: str = "yes"
