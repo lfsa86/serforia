@@ -14,6 +14,8 @@ pyodbc>=4.0.39
 # Data processing
 pandas>=2.0.0
 numpy>=1.24.0
+plotly>=5.17.0
+matplotlib>=3.7.0
 
 # CORS and middleware
 python-multipart>=0.0.6

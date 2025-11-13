@@ -39,14 +39,14 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-content">
-          <h1>🌲 SERFOR - Sistema de Consulta Forestal</h1>
+          <h1>SERFOR - Sistema de Consulta Forestal</h1>
           <p>Sistema inteligente para consultas sobre datos forestales del Perú</p>
         </div>
       </header>
 
       <main className="app-main">
         <section className="query-section">
-          <h2>💬 Realizar Consulta</h2>
+          <h2>Realizar Consulta</h2>
           <QueryForm onSubmit={handleQuerySubmit} isLoading={isLoading} />
         </section>
 

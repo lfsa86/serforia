@@ -72,10 +72,11 @@ class OrchestratorService:
             if sql_queries:
                 response_data["sql_queries"] = sql_queries
 
-            # Extract visualization code
-            viz_code = workflow_data.get("visualization_code_blocks", [])
-            if viz_code:
-                response_data["visualization_code"] = viz_code
+            # Extract visualization data (Plotly JSON)
+            viz_data = workflow_data.get("visualization_data", [])
+            if viz_data:
+                response_data["visualization_data"] = viz_data
+                print(f"📊 DEBUG - Visualization data extracted: {len(viz_data)} visualizations")
 
             # Include workflow data if requested
             if include_workflow:

@@ -17,7 +17,7 @@ class QueryResponse(BaseModel):
     final_response: str = ""
     agents_used: List[str] = []
     data: Optional[List[Dict[str, Any]]] = None
-    visualization_code: Optional[List[str]] = None
+    visualization_data: Optional[List[Dict[str, Any]]] = None
     sql_queries: Optional[List[Dict[str, Any]]] = None
     error: Optional[str] = None
     workflow_data: Optional[Dict[str, Any]] = None

@@ -6,13 +6,14 @@
 
 .app {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+  background: rgb(243, 246, 248);
+  font-family: 'Roboto', sans-serif;
 }
 
 /* Header */
 .app-header {
-  background: linear-gradient(90deg, #2E8B57, #228B22);
-  color: white;
+  background: rgb(192, 214, 132);
+  color: rgb(28, 96, 84);
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -20,12 +21,15 @@
 .header-content h1 {
   margin: 0;
   font-size: 2rem;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 600;
 }
 
 .header-content p {
   margin: 0.5rem 0 0 0;
-  opacity: 0.9;
+  opacity: 0.85;
   font-size: 1.1rem;
+  color: rgb(28, 96, 84);
 }
 
 /* Main Content */
@@ -46,7 +50,9 @@
 
 .query-section h2 {
   margin-bottom: 1.5rem;
-  color: #2E8B57;
+  color: rgb(28, 96, 84);
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
 }
 
 /* Query Form */
@@ -80,7 +86,7 @@
 
 .form-group textarea:focus {
   outline: none;
-  border-color: #2E8B57;
+  border-color: rgb(28, 96, 84);
 }
 
 .form-group textarea:disabled {
@@ -94,18 +100,18 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 1rem 2rem;
-  background: #2E8B57;
+  background: rgb(28, 96, 84);
   color: white;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s;
 }
 
 .query-form button:hover:not(:disabled) {
-  background: #228B22;
+  background: rgb(69, 124, 115);
 }
 
 .query-form button:disabled {
@@ -125,7 +131,7 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  color: #2E8B57;
+  color: rgb(28, 96, 84);
   font-size: 0.95rem;
 }
 
@@ -136,20 +142,22 @@
 }
 
 .example-button {
-  padding: 0.5rem 1rem;
-  background: #f0f8f4;
-  color: #2E8B57;
-  border: 1px solid #2E8B57;
-  border-radius: 20px;
-  font-size: 0.85rem;
+  padding: 0.75rem 1.25rem;
+  background: rgb(28, 96, 84);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .example-button:hover:not(:disabled) {
-  background: #2E8B57;
-  color: white;
+  background: rgb(69, 124, 115);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(28, 96, 84, 0.3);
 }
 
 .example-button:disabled {
@@ -175,7 +183,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #2E8B57;
+  border-top: 4px solid rgb(28, 96, 84);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -213,7 +221,7 @@
 }
 
 .results-header h2 {
-  color: #2E8B57;
+  color: rgb(28, 96, 84);
   margin: 0;
 }
 
@@ -228,8 +236,8 @@
 }
 
 .status-badge.success {
-  background: #e8f5e9;
-  color: #2E8B57;
+  background: rgba(28, 96, 84, 0.1);
+  color: rgb(28, 96, 84);
 }
 
 .status-badge.error {
@@ -250,7 +258,7 @@
 }
 
 .section-header h3 {
-  color: #2E8B57;
+  color: rgb(28, 96, 84);
 }
 
 .metrics {
@@ -281,7 +289,7 @@
 }
 
 .data-table thead {
-  background: #2E8B57;
+  background: rgb(28, 96, 84);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -292,7 +300,7 @@
   text-align: left;
   font-weight: 600;
   color: white;
-  border-bottom: 2px solid #228B22;
+  border-bottom: 2px solid rgb(69, 124, 115);
 }
 
 .data-table td {
@@ -316,18 +324,18 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: #2E8B57;
+  background: rgb(28, 96, 84);
   color: white;
   border: none;
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s;
 }
 
 .download-btn:hover {
-  background: #228B22;
+  background: rgb(69, 124, 115);
 }
 
 /* SQL Queries Section */
@@ -401,7 +409,7 @@
 }
 
 .response-section h3 {
-  color: #2E8B57;
+  color: rgb(28, 96, 84);
   margin-bottom: 1rem;
 }
 
@@ -424,7 +432,7 @@
 .markdown-content h4,
 .markdown-content h5,
 .markdown-content h6 {
-  color: #2E8B57;
+  color: rgb(28, 96, 84);
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   font-weight: 600;
@@ -459,7 +467,7 @@
 
 .markdown-content strong {
   font-weight: 600;
-  color: #2E8B57;
+  color: rgb(28, 96, 84);
 }
 
 .markdown-content em {
@@ -494,7 +502,7 @@
 }
 
 .markdown-content blockquote {
-  border-left: 4px solid #2E8B57;
+  border-left: 4px solid rgb(28, 96, 84);
   padding-left: 1rem;
   margin-left: 0;
   margin-bottom: 1rem;
@@ -509,7 +517,7 @@
 }
 
 .markdown-content a {
-  color: #2E8B57;
+  color: rgb(28, 96, 84);
   text-decoration: none;
   font-weight: 500;
 }
@@ -536,7 +544,7 @@
 }
 
 .markdown-content table th {
-  background: #2E8B57;
+  background: rgb(28, 96, 84);
   color: white;
   font-weight: 600;
 }
@@ -556,9 +564,9 @@
 /* Agents Section */
 .agents-section {
   padding: 1rem;
-  background: #e8f5e9;
+  background: rgba(28, 96, 84, 0.1);
   border-radius: 8px;
-  color: #2E8B57;
+  color: rgb(28, 96, 84);
 }
 
 /* Error Message */
@@ -599,5 +607,40 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+}
+
+/* Visualization Section */
+.visualization-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.visualization-section h3 {
+  color: rgb(28, 96, 84);
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.visualizations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem;
+}
+
+.visualization-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+@media (max-width: 768px) {
+  .visualizations-grid {
+    grid-template-columns: 1fr;
   }
 }

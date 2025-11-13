@@ -1,71 +1,164 @@
 """
 Visualization Agent for the SERFOR multi-agent system
-Now simplified for API mode - visualizations handled by React frontend
+Generates Plotly visualizations and exports them as JSON for React frontend
 """
 import ast
 import logging
 from typing import Dict, Any, List
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import json
 
 from .base_agent import BaseAgent
 
 
 class VisualizationAgent(BaseAgent):
-    """Agent specialized in analyzing data for visualization recommendations"""
+    """Agent specialized in generating Plotly visualizations for SERFOR data"""
 
     def __init__(self):
         super().__init__(
             name="Visualization",
-            role_setup="""Eres un analista de datos especializado en recomendar visualizaciones para datos SERFOR.
+            role_setup="""Eres un especialista en visualizaciones Plotly para datos SERFOR (forestales de Perú).
 
-Tu trabajo es analizar los datos y devolver recomendaciones simples, NO código ejecutable.
-Las visualizaciones se implementarán en el frontend React.""",
+Tu trabajo es analizar los datos y generar código Python/Plotly ejecutable que cree visualizaciones informativas.
+Las visualizaciones se exportarán como JSON para renderizarse en el frontend React con react-plotly.js.""",
             temperature=0.3,
-            max_token=1500
+            max_token=2000
         )
 
     def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Simplified processing - no code generation, just data analysis
-        Visualizations are now handled by the React frontend
+        Generate Plotly visualizations from query results and export as JSON
         """
         try:
             query_results = input_data.get("query_results", [])
+            user_query = input_data.get("user_query", "")
 
-            if not query_results:
+            if not query_results or len(query_results) == 0:
                 return {"has_visualizations": False}
 
-            # Just return empty - frontend handles visualizations
-            logging.info("Visualization processing skipped - handled by frontend")
+            # Convert to DataFrame
+            df = pd.DataFrame(query_results)
+
+            # Generate visualization code
+            logging.info(f"Generating visualizations for {len(df)} rows, {len(df.columns)} columns")
+            prompt = self._build_visualization_prompt(df, user_query)
+            response = self.run(prompt)
+
+            # Extract code blocks
+            code_blocks = self._extract_response_blocks(response, "CODIGO_PLOTLY")
+
+            if not code_blocks:
+                logging.warning("No visualization code blocks found in agent response")
+                return {"has_visualizations": False}
+
+            # Execute code and capture figures
+            viz_data = self._execute_and_capture_figures(code_blocks, df)
 
             return {
-                "has_visualizations": False,
-                "message": "Visualizations handled by frontend"
+                "has_visualizations": len(viz_data) > 0,
+                "visualization_data": viz_data,
+                "visualization_count": len(viz_data)
             }
 
         except Exception as e:
             logging.error(f"Error in VisualizationAgent: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return {"has_visualizations": False, "error": str(e)}
+
+    def _execute_and_capture_figures(self, code_blocks: List[str], df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """
+        Execute visualization code blocks and capture Plotly figures as JSON
+        """
+        viz_data = []
+
+        for i, code_block in enumerate(code_blocks):
+            try:
+                # Clean the code
+                code = self._clean_code_block(code_block)
+
+                # Validate safety
+                if not self._validate_code_safety(code):
+                    logging.warning(f"Code block {i+1} failed safety validation")
+                    continue
+
+                # Create execution namespace
+                namespace = {
+                    'df': df,
+                    'pd': pd,
+                    'px': px,
+                    'go': go,
+                    'figures': []  # List to collect figures
+                }
+
+                # Wrap code to capture figures
+                wrapped_code = self._wrap_code_to_capture_figures(code)
+
+                # Execute the code
+                exec(wrapped_code, namespace)
+
+                # Extract captured figures
+                figures = namespace.get('figures', [])
+
+                for fig in figures:
+                    if hasattr(fig, 'to_json'):
+                        # Convert Plotly figure to JSON
+                        fig_json = fig.to_json()
+                        viz_data.append({
+                            "type": "plotly",
+                            "data": json.loads(fig_json)
+                        })
+                        logging.info(f"Captured Plotly figure from code block {i+1}")
+
+            except Exception as e:
+                logging.error(f"Error executing visualization code block {i+1}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                continue
+
+        return viz_data
+
+    def _wrap_code_to_capture_figures(self, code: str) -> str:
+        """
+        Wrap code to capture Plotly figure objects
+        """
+        # Replace common Plotly creation patterns to capture figures
+        wrapped = code
+
+        # Pattern 1: fig = px.something() or fig = go.Figure()
+        # Already creates a 'fig' variable, we'll capture it at the end
+
+        # Pattern 2: Direct plotting without assignment
+        # We need to look for px.* or go.Figure() calls
+
+        # Add capture logic at the end
+        capture_code = """
+# Capture any figure created
+if 'fig' in locals():
+    figures.append(fig)
+"""
+
+        return wrapped + "\n" + capture_code
 
     def execute_visualization_code(self, code_blocks: List[str], df: pd.DataFrame) -> Dict[str, Any]:
         """
-        Visualization execution disabled for API mode.
-        Visualizations are now handled by the React frontend.
+        Legacy method - kept for compatibility with Streamlit version
         """
-        logging.info("Visualization execution skipped - handled by frontend")
+        viz_data = self._execute_and_capture_figures(code_blocks, df)
         return {
-            "success": True,
-            "message": "Visualizations handled by frontend",
-            "code_blocks": []
+            "success": len(viz_data) > 0,
+            "visualization_data": viz_data,
+            "message": f"Generated {len(viz_data)} visualizations"
         }
 
-    # Legacy methods kept for compatibility but not used
     def _build_visualization_prompt(self, df: pd.DataFrame, user_query: str) -> str:
-        """Build prompt with simple data + detailed instructions"""
+        """Build prompt to generate Plotly visualization code"""
         sample_data = df.head(3).to_dict('records') if len(df) > 0 else []
 
         return f"""
-Eres un especialista en visualizaciones Streamlit para datos SERFOR (forestales de Perú).
+Eres un especialista en visualizaciones Plotly para datos SERFOR (forestales de Perú).
 
 CONSULTA USUARIO: "{user_query}"
 COLUMNAS DISPONIBLES: {list(df.columns)}
@@ -73,56 +166,55 @@ MUESTRA DE DATOS: {sample_data}
 TOTAL FILAS: {len(df)}
 
 TU TRABAJO:
-1. ANALIZAR los datos y determinar visualizaciones apropiadas
-2. GENERAR código Python/Streamlit ejecutable
-3. CREAR 2-4 visualizaciones complementarias + métricas clave
-4. USAR títulos descriptivos con emojis relevantes
+1. ANALIZAR los datos y determinar 2-3 visualizaciones apropiadas
+2. GENERAR código Python/Plotly ejecutable
+3. Cada visualización debe asignarse a una variable 'fig'
+4. USAR títulos descriptivos en español
 
 TIPOS DE VISUALIZACIÓN SEGÚN DATOS:
-- st.bar_chart() → Conteos (titulares, especies, regiones)
-- st.line_chart() → Tendencias temporales (multas por año)
+- px.bar() → Conteos, comparaciones (titulares, especies, regiones)
+- px.line() → Tendencias temporales (multas por año)
 - px.histogram() → Distribuciones (montos, superficies)
 - px.scatter() → Correlaciones (superficie vs multa)
-- st.metric() → KPIs importantes
+- px.pie() → Proporciones
 
 REGLAS CRÍTICAS:
 ✅ USA la variable 'df' (ya disponible)
 ✅ VALIDA columnas antes de usar: if 'columna' in df.columns:
 ✅ MANEJA casos con pocos datos: if len(df) > 5:
-❌ NO uses imports (todo está disponible)
+✅ CADA gráfico debe asignarse a 'fig': fig = px.bar(...)
+✅ Importa px y go ya están disponibles
+❌ NO uses imports
 ❌ NO generes datos ficticios
+❌ NO uses st.plotly_chart() ni ninguna función de Streamlit
 
 EJEMPLO DE RESPUESTA:
 
-<CODIGO_STREAMLIT>
-# Métricas principales
-if len(df) > 0:
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("📋 Total Registros", len(df))
-
-    if 'TX_NombreTitular' in df.columns:
-        with col2:
-            st.metric("👥 Titulares Únicos", df['TX_NombreTitular'].nunique())
-
-    if 'NU_MultaUIT' in df.columns:
-        with col3:
-            st.metric("💰 Multa Total", f"{{df['NU_MultaUIT'].sum():.1f}} UIT")
-
-# Visualización principal
+<CODIGO_PLOTLY>
+# Visualización 1: Top 10 Titulares
 if 'TX_NombreTitular' in df.columns and len(df) > 5:
-    st.subheader("📊 Top 10 Titulares con Más Registros")
     top_titulares = df['TX_NombreTitular'].value_counts().head(10)
-    st.bar_chart(top_titulares)
+    fig = px.bar(
+        x=top_titulares.index,
+        y=top_titulares.values,
+        title="Top 10 Titulares con Más Registros",
+        labels={{'x': 'Titular', 'y': 'Registros'}}
+    )
+</CODIGO_PLOTLY>
 
-# Distribución si hay datos numéricos
+<CODIGO_PLOTLY>
+# Visualización 2: Distribución de Multas
 if 'NU_MultaUIT' in df.columns and len(df) > 10:
-    st.subheader("💰 Distribución de Multas")
-    fig = px.histogram(df, x='NU_MultaUIT', title="Distribución de Multas (UIT)")
-    st.plotly_chart(fig, use_container_width=True)
-</CODIGO_STREAMLIT>
+    fig = px.histogram(
+        df,
+        x='NU_MultaUIT',
+        title="Distribución de Multas (UIT)",
+        labels={{'NU_MultaUIT': 'Multa (UIT)'}}
+    )
+</CODIGO_PLOTLY>
 
-Responde SOLO con bloques <CODIGO_STREAMLIT>, sin explicaciones adicionales.
+Responde SOLO con bloques <CODIGO_PLOTLY>, sin explicaciones adicionales.
+Genera 2-3 visualizaciones relevantes según los datos disponibles.
 """
 
     def _extract_response_blocks(self, response: str, block_type: str) -> List[str]:

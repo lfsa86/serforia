@@ -1,6 +1,7 @@
 import type { QueryResponse } from '../types';
 import { DataTable } from './DataTable';
 import { SQLQueriesDisplay } from './SQLQueriesDisplay';
+import { VisualizationDisplay } from './VisualizationDisplay';
 import { Download, CheckCircle, AlertCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -42,7 +43,7 @@ export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   return (
     <div className="results-container">
       <div className="results-header">
-        <h2>📋 Resultados de la Consulta</h2>
+        <h2>Resultados de la Consulta</h2>
         {results.success ? (
           <div className="status-badge success">
             <CheckCircle size={16} />
@@ -87,6 +88,11 @@ export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
             </div>
           )}
 
+          {/* Visualizations */}
+          {results.visualization_data && results.visualization_data.length > 0 && (
+            <VisualizationDisplay visualizations={results.visualization_data} />
+          )}
+
           {/* SQL Queries */}
           {results.sql_queries && results.sql_queries.length > 0 && (
             <SQLQueriesDisplay queries={results.sql_queries} />
@@ -102,13 +108,13 @@ export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
             </div>
           </div>
 
-          {/* Agents Used */}
+          {/* Agents Used 
           {results.agents_used && results.agents_used.length > 0 && (
             <div className="agents-section">
               <strong>🤖 Agentes utilizados:</strong>{' '}
               {results.agents_used.join(', ')}
             </div>
-          )}
+          )}*/}
         </>
       )}
     </div>

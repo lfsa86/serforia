@@ -11,12 +11,17 @@ export interface SQLQuery {
   task_description: string;
 }
 
+export interface VisualizationData {
+  type: string;
+  data: any; // Plotly JSON format
+}
+
 export interface QueryResponse {
   success: boolean;
   final_response: string;
   agents_used: string[];
   data?: Record<string, any>[];
-  visualization_code?: string[];
+  visualization_data?: VisualizationData[];
   sql_queries?: SQLQuery[];
   error?: string;
   workflow_data?: any;
