@@ -48,7 +48,7 @@ Ejemplo de formato:
       "step_id": 2,
       "description": "Consultar infractores por fecha",
       "action_type": "query",
-      "parameters": {"table": "T_GEP_INFRACTORES", "where": "fecha BETWEEN ..."},
+      "parameters": {"table": "V_INFRACTOR", "where": "FechaResolucion BETWEEN ..."},
       "dependencies": [1],
       "max_retries": 3
     }
@@ -114,15 +114,31 @@ Ejemplo de formato:
 
         🎯 ESTRATEGIAS DE CONSULTA (PRIORIZAR SIMPLICIDAD):
 
-        1. EVALÚA PRIMERO SI PUEDES USAR UNA SOLA TABLA:
-           - Para consultas sobre superficie/departamento: T_GEP_TITULOHABILITANTE tiene TX_Departamento,TX_Provincia,TX_Distrito y NU_Superficie
-           - Para consultas sobre dispositivos legales: T_GEP_INFRACTORES tiene TX_DispositivoLegal
-           - Para consultas sobre multas: T_GEP_INFRACTORES tiene NU_MultaUIT (si es mayor a 0 es que hay multa)
-           - Para consultas sobre infractores: T_GEP_INFRACTORES tiene TX_Infractor y TX_TitDeTitHab
+        1. EVALÚA PRIMERO SI PUEDES USAR UNA SOLA VISTA:
+           - Para consultas sobre superficie/departamento: V_TITULOHABILITANTE tiene Departamento, Provincia, Distrito y Superficie
+           - Para consultas sobre dispositivos legales: V_INFRACTOR tiene DispositivoLegal
+           - Para consultas sobre multas: V_INFRACTOR tiene Multa (el valor YA ESTÁ EN UIT, no necesitas convertir)
+           - Para consultas sobre infractores: V_INFRACTOR tiene Infractor y Titular
+           - Para consultas sobre licencias de caza: V_LICENCIA_CAZA
+           - Para consultas sobre plantaciones: V_PLANTACION
+           - Para consultas sobre autorizaciones: V_AUTORIZACION_CTP, V_AUTORIZACION_DEPOSITO, V_AUTORIZACION_DESBOSQUE
+           - Para consultas sobre cambios de uso: V_CAMBIO_USO
 
-        2. SI NECESITAS RELACIONAR AMBAS TABLAS (JOINs VÁLIDOS):
-           - Relación: T_GEP_INFRACTORES.TX_TituloHabilitante = T_GEP_TITULOHABILITANTE.TX_CodigoContrato
-           - Relación: T_GEP_INFRACTORES.TX_TitDeTitHab = T_GEP_TITULOHABILITANTE.TX_NombreTitular
+        NOTA IMPORTANTE SOBRE MULTAS:
+           - El campo Multa en V_INFRACTOR ya está expresado en UIT (Unidad Impositiva Tributaria)
+           - Para "multas mayores a 10 UIT" usa directamente: WHERE Multa > 10
+           - NO busques tablas de conversión de UIT ni valores de UIT, el valor ya está en esa unidad
+           - V_INFRACTOR NO tiene Departamento/Provincia/Distrito - para eso necesitas JOIN con V_TITULOHABILITANTE
+
+        NOTA IMPORTANTE SOBRE UBICACIÓN GEOGRÁFICA:
+           - Los campos Departamento, Provincia, Distrito están en V_TITULOHABILITANTE (NO en V_INFRACTOR)
+           - Para "multas por departamento" necesitas JOIN: V_INFRACTOR JOIN V_TITULOHABILITANTE
+           - Ejemplo: SELECT th.Departamento, SUM(i.Multa) FROM Dir.V_INFRACTOR i JOIN Dir.V_TITULOHABILITANTE th ON i.TituloHabilitante = th.TituloHabilitante GROUP BY th.Departamento
+
+        2. SI NECESITAS RELACIONAR VISTAS (JOINs VÁLIDOS):
+           - Relación: V_INFRACTOR.TituloHabilitante = V_TITULOHABILITANTE.TituloHabilitante
+           - Relación: V_INFRACTOR.Titular = V_TITULOHABILITANTE.Titular
+           - Relación: V_INFRACTOR.NumeroDocumento = V_TITULOHABILITANTE.NumeroDocumento
            - Para JOINs usa execute_complex_query con SQL completo
            - NO separes JOINs en múltiples pasos
 
@@ -144,7 +160,7 @@ Ejemplo de formato:
         - Para action_type usa solo: "validate", "query", "transform", "calculate", "aggregate" (NO "format")
 
         EJEMPLO VÁLIDO:
-        {{"step_id": 1, "action_type": "query", "parameters": {{"query": "SELECT th.TX_NombreTitular FROM Dir.T_GEP_TITULOHABILITANTE th JOIN Dir.T_GEP_INFRACTORES i ON th.TX_NombreTitular = i.TX_Infractor WHERE th.TX_SituacionActual = 'vigente' AND i.NU_MultaUIT > 20"}}}}
+        {{"step_id": 1, "action_type": "query", "parameters": {{"query": "SELECT th.Titular FROM Dir.V_TITULOHABILITANTE th JOIN Dir.V_INFRACTOR i ON th.TituloHabilitante = i.TituloHabilitante WHERE th.Situacion = 'vigente' AND i.Multa > 20"}}}}
         """
 
         response = self.run(prompt)

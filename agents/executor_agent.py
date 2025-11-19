@@ -55,9 +55,15 @@ Tienes acceso a skills especializadas para:
 - count_table_rows: Contar filas de tablas
 - get_table_sample: Obtener muestras de datos
 
-TABLAS DISPONIBLES:
-- Dir.T_GEP_INFRACTORES: Información de infracciones forestales
-- Dir.T_GEP_TITULOHABILITANTE: Información de títulos habilitantes
+VISTAS DISPONIBLES:
+- Dir.V_INFRACTOR: Información de infracciones forestales
+- Dir.V_TITULOHABILITANTE: Información de títulos habilitantes
+- Dir.V_LICENCIA_CAZA: Licencias de caza
+- Dir.V_PLANTACION: Plantaciones forestales
+- Dir.V_AUTORIZACION_CTP: Autorizaciones CTP
+- Dir.V_AUTORIZACION_DEPOSITO: Autorizaciones de depósito
+- Dir.V_AUTORIZACION_DESBOSQUE: Autorizaciones de desbosque
+- Dir.V_CAMBIO_USO: Cambios de uso
 
 IMPORTANTE - SINTAXIS SQL SERVER:
 - USA 'TOP N' en lugar de 'LIMIT N'

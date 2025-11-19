@@ -6,6 +6,9 @@ from dataclasses import dataclass, asdict
 import json
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 @dataclass
 class ColumnInfo:
@@ -57,8 +60,27 @@ class DynamicSchemaMapper:
     def __init__(self, cache_file: str = "database/schema_cache.json"):
         self.cache_file = cache_file
         self.tables: Dict[str, TableInfo] = {}
-        self.connection_config = None
+        self.connection_config = self._load_default_config()
         self._load_cache()
+
+        # Auto-discover if no cache exists
+        if not self.tables:
+            try:
+                self.discover_schema()
+            except Exception as e:
+                print(f"Auto-discovery failed: {e}")
+
+    def _load_default_config(self) -> Dict[str, str]:
+        """Load default connection configuration from environment"""
+        return {
+            "server": os.getenv("DB_SERVER", "localhost"),
+            "port": os.getenv("DB_PORT", "1433"),
+            "database": os.getenv("DB_DATABASE", "SERFOR_BDDWH"),
+            "username": os.getenv("DB_USERNAME", "sa"),
+            "password": os.getenv("DB_PASSWORD", "SerforDB@2025"),
+            "driver": os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server"),
+            "trust_certificate": os.getenv("DB_TRUST_CERT", "yes")
+        }
 
     def set_connection_config(self, config: Dict[str, Any]):
         """Set database connection configuration"""
@@ -95,14 +117,14 @@ class DynamicSchemaMapper:
             with pyodbc.connect(conn_str) as conn:
                 cursor = conn.cursor()
 
-                # Discover tables
+                # Discover tables and views
                 tables_query = """
                 SELECT
                     TABLE_SCHEMA,
                     TABLE_NAME,
                     TABLE_TYPE
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_TYPE = 'BASE TABLE'
+                WHERE TABLE_TYPE = 'VIEW'
                 AND TABLE_SCHEMA NOT IN ('sys', 'information_schema')
                 ORDER BY TABLE_SCHEMA, TABLE_NAME
                 """
@@ -399,17 +421,26 @@ class DynamicSchemaMapper:
             Dictionary mapping relationship descriptions to JOIN conditions
         """
         return {
-            "infractores_to_titulo_habilitante_by_codigo": {
-                "description": "Relacionar infractores con títulos habilitantes por código",
-                "join_condition": "T_GEP_INFRACTORES.TX_TituloHabilitante = T_GEP_TITULOHABILITANTE.TX_CodigoContrato",
-                "tables": ["T_GEP_INFRACTORES", "T_GEP_TITULOHABILITANTE"],
-                "relationship_type": "many_to_one"
+            "infractor_to_titulo_habilitante_by_codigo": {
+                "description": "Relacionar infractores con títulos habilitantes por código de título",
+                "join_condition": "V_INFRACTOR.TituloHabilitante = V_TITULOHABILITANTE.TituloHabilitante",
+                "tables": ["V_INFRACTOR", "V_TITULOHABILITANTE"],
+                "relationship_type": "many_to_one",
+                "confidence": 0.9
             },
-            "infractores_to_titulo_habilitante_by_titular": {
+            "infractor_to_titulo_habilitante_by_titular": {
                 "description": "Relacionar infractores con títulos habilitantes por nombre del titular",
-                "join_condition": "T_GEP_INFRACTORES.TX_TitDeTitHab = T_GEP_TITULOHABILITANTE.TX_NombreTitular",
-                "tables": ["T_GEP_INFRACTORES", "T_GEP_TITULOHABILITANTE"],
-                "relationship_type": "many_to_one"
+                "join_condition": "V_INFRACTOR.Titular = V_TITULOHABILITANTE.Titular",
+                "tables": ["V_INFRACTOR", "V_TITULOHABILITANTE"],
+                "relationship_type": "many_to_one",
+                "confidence": 0.8
+            },
+            "infractor_to_titulo_habilitante_by_documento": {
+                "description": "Relacionar infractores con títulos habilitantes por número de documento",
+                "join_condition": "V_INFRACTOR.NumeroDocumento = V_TITULOHABILITANTE.NumeroDocumento",
+                "tables": ["V_INFRACTOR", "V_TITULOHABILITANTE"],
+                "relationship_type": "many_to_one",
+                "confidence": 0.85
             }
         }
 
