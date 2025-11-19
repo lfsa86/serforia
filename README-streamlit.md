@@ -119,3 +119,16 @@ Los logs se guardan automáticamente en:
 - [ ] Filtros avanzados en tablas
 - [ ] Modo oscuro/claro
 - [ ] Guardado de consultas favoritas
+
+
+
+
+
+V_AUTORIZACION_CTP
+V_AUTORIZACION_DESBOSQUE
+V_AUTORIZACION_DEPOSITO
+V_INFRACTOR
+V_PLANTACION
+V_TITULOHABILITANTE
+V_CAMBIO_USO
+V_LICENCIA_CAZA

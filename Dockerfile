@@ -12,6 +12,8 @@ WORKDIR /usr/config
 
 # Copiar scripts SQL
 COPY init/DataPilotoIA.sql /usr/config/DataPilotoIA.sql
+COPY init/scriptBDIA29102025.sql /usr/config/scriptBDIA29102025.sql
+COPY init/PATCH_correccion_vistas.sql /usr/config/PATCH_correccion_vistas.sql
 COPY init/setup.sql /usr/config/setup.sql
 
 # Copiar script de inicialización

@@ -53,13 +53,13 @@ function App() {
         {isLoading && (
           <div className="loading-container">
             <div className="spinner"></div>
-            <p>🔄 Procesando consulta...</p>
+            <p>Procesando consulta...</p>
           </div>
         )}
 
         {error && !results && (
           <div className="error-container">
-            <p>❌ Error: {error}</p>
+            <p>Error: {error}</p>
           </div>
         )}
 

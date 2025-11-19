@@ -29,6 +29,14 @@ echo "Ejecutando setup.sql..."
 echo "Ejecutando DataPilotoIA.sql..."
 /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -C -i /usr/config/DataPilotoIA.sql
 
+# Ejecutar script de datos
+echo "Ejecutando scriptBDIA29102025.sql..."
+/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -C -i /usr/config/scriptBDIA29102025.sql
+
+# Ejecutar script de parche para vistas
+echo "Ejecutando PATCH_correccion_vistas.sql..."
+/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -C -i /usr/config/PATCH_correccion_vistas.sql
+
 echo "Inicialización completada"
 
 # Mantener el contenedor en ejecución

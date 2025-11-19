@@ -66,6 +66,10 @@ export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
 
       {results.success && (
         <>
+        {/* SQL Queries */}
+        {results.sql_queries && results.sql_queries.length > 0 && (
+          <SQLQueriesDisplay queries={results.sql_queries} />
+        )}
           {/* Data Table */}
           {results.data && results.data.length > 0 && (
             <div className="data-section">
@@ -93,10 +97,6 @@ export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
             <VisualizationDisplay visualizations={results.visualization_data} />
           )}
 
-          {/* SQL Queries */}
-          {results.sql_queries && results.sql_queries.length > 0 && (
-            <SQLQueriesDisplay queries={results.sql_queries} />
-          )}
 
           {/* Response Summary */}
           <div className="response-section">

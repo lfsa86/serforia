@@ -8,9 +8,9 @@ interface QueryFormProps {
 
 const EXAMPLE_QUERIES = [
   "¿Cuántos titulares forestales hay en total?",
-  "Muestra el top 10 de titulares con más registros",
-  "¿Cuáles son las infracciones más comunes?",
-  "Lista todas las multas mayores a 50 UIT",
+  "Suma las multas registradas por departamento del titular del título habilitante",
+  "Me gustaría identificar los titulares que actualmente poseen títulos habilitantes vigentes, y que además tienen infracciónes sancionadas con multas mayores a 20 UIT",
+  "¿Puedes hacer un resumen de las superficies de titulo habitante según departamento?",
 ];
 
 export const QueryForm = ({ onSubmit, isLoading }: QueryFormProps) => {
