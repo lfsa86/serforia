@@ -40,6 +40,13 @@ client/yarn-debug.log*
 client/yarn-error.log*
 client/pnpm-debug.log*
 
+# Demo version (Streamlit)
+demo-version/.env
+demo-version/logs/
+
+# Demo DB (Docker SQL files - too large for git)
+demo-db/init/*.sql
+
 
 .claude/
 .playwright-mcp/
