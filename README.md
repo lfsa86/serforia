@@ -4,154 +4,206 @@ Sistema de consultas en lenguaje natural para datos de SERFOR, utilizando agente
 
 ## Arquitectura del Proyecto
 
-El proyecto está organizado en tres componentes principales:
+El proyecto está organizado en **cuatro componentes independientes**:
 
 ```
 naturai-serfor-demo/
-├── api/                  # Backend FastAPI (Python con uv)
-├── client/               # Frontend React (Node.js)
-├── init/                 # Scripts SQL de inicialización
-│   ├── setup.sql         # Crea DB y schema
-│   ├── DataPilotoIA.sql  # Crea tablas y datos
-│   └── entrypoint.sh     # Script de inicialización automática
-├── Dockerfile            # SQL Server con auto-setup
-├── build-and-run.bat     # Script Windows para DB
-├── build-and-run.sh      # Script Linux/Mac para DB
-├── streamlit_app.py      # Aplicación Streamlit (disponible, no en Docker)
-└── README.md             # Esta documentación
+├── api/                  # Backend FastAPI (servicio independiente)
+├── client/               # Frontend React (servicio independiente)
+├── demo-version/         # Versión demo con Streamlit
+└── demo-db/              # Base de datos SQL Server dockerizada
 ```
 
 ### Componentes
 
-1. **API Backend** - FastAPI + Python
+1. **API Backend** (`/api`) - FastAPI + Python
    - Procesamiento de consultas en lenguaje natural
    - Agentes de IA con InstantNeo y OpenAI
-   - Conexión a SQL Server para datos de SERFOR
-   - Gestión con **uv** (entorno virtual)
+   - Sistema autocontenido con sus propios `agents/`, `database/`, `utils/`
+   - Gestión con **uv** para desarrollo local y **pip** para repos remotos
+   - Ver documentación completa: [api/README.md](api/README.md)
 
-2. **Client Frontend** - React + TypeScript + Vite
-   - Interfaz web interactiva
+2. **Client Frontend** (`/client`) - React + TypeScript + Vite
+   - Interfaz web interactiva moderna
    - Comunicación con API via REST
-   - Visualización de resultados
+   - Visualización de resultados y gráficos
+   - Completamente independiente y listo para deployment
+   - Ver documentación completa: [client/README.md](client/README.md)
 
-3. **SQL Server** - Base de datos (Docker)
-   - Contenedor con inicialización automática
-   - Datos de SERFOR (SERFOR_BDDWH)
-   - Scripts SQL se ejecutan automáticamente al iniciar
+3. **Demo Version** (`/demo-version`) - Aplicación Streamlit
+   - Versión demo del sistema con interfaz Streamlit
+   - Incluye agentes, database y utils propios
+   - Para pruebas y demostraciones rápidas
+   - Ver documentación: [demo-version/README-streamlit.md](demo-version/README-streamlit.md)
 
-4. **Streamlit App** - Aplicación de visualización
-   - Disponible para pruebas locales
-   - No se ejecuta en Docker
+4. **Demo DB** (`/demo-db`) - SQL Server Dockerizado
+   - Contenedor Docker con SQL Server 2022
+   - Inicialización automática con scripts SQL
+   - Base de datos SERFOR_BDDWH lista para usar
+   - Ver documentación: [demo-db/README-Docker.md](demo-db/README-Docker.md)
 
 ## Requisitos del Sistema
 
-- **Python 3.11+** - Para la API
+- **Python 3.11+** - Para API y demo-version
 - **Node.js 18+** - Para el frontend
-- **Docker & Docker Compose** - Para SQL Server
-- **uv** - Gestor de paquetes Python
+- **Docker** - Para la base de datos
+- **uv** - Gestor de paquetes Python (opcional, recomendado para desarrollo)
 - **ODBC Driver 18 for SQL Server** - Para conexión a BD
 - **OpenAI API Key** - Para los agentes de IA
 
 ## Inicio Rápido
 
-### 1. Instalar Dependencias Globales
+### Opción 1: API + Client (Arquitectura de Microservicios)
 
-**uv (Python package manager):**
+#### 1. Iniciar Base de Datos
+
 ```bash
+cd demo-db
+
 # Windows
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# macOS/Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-**ODBC Driver 18:**
-- Windows: https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server
-- macOS: `brew install msodbcsql18`
-- Linux: Ver instrucciones en [api/README.md](api/README.md)
-
-### 2. Iniciar SQL Server
-
-El proyecto usa un Dockerfile que automáticamente configura SQL Server y ejecuta todos los scripts de inicialización.
-
-**En Windows:**
-```bash
 build-and-run.bat
-```
 
-**En Linux/Mac:**
-```bash
+# Linux/Mac
 chmod +x build-and-run.sh
 ./build-and-run.sh
 ```
 
-**O manualmente:**
-```bash
-# Construir imagen
-docker build -t serfor-sqlserver:latest .
+Espera ~30-60 segundos para que la BD inicialice.
 
-# Ejecutar contenedor
-docker run -d --name serfor-sqlserver -p 1433:1433 -v sqlserver_data:/var/opt/mssql serfor-sqlserver:latest
-
-# Ver logs de inicialización
-docker logs -f serfor-sqlserver
-```
-
-El contenedor automáticamente:
-- ✅ Inicia SQL Server
-- ✅ Espera a que esté listo
-- ✅ Ejecuta `setup.sql` (crea DB y schema Dir)
-- ✅ Ejecuta `DataPilotoIA.sql` (crea tablas y datos)
-
-**Credenciales de conexión:**
-- Host: `localhost,1433`
+**Credenciales:**
+- Host: `localhost:1433`
 - Usuario: `sa`
 - Password: `SerforDB@2025`
 - Base de datos: `SERFOR_BDDWH`
 
-Espera a que la inicialización complete (revisa los logs, toma ~30-60 segundos).
-
-### 3. Configurar y Ejecutar API
+#### 2. Configurar y Ejecutar API
 
 ```bash
 cd api
 
-# Crear entorno virtual e instalar dependencias
+# Con UV (recomendado para desarrollo local)
 uv sync
-
-# Crear archivo .env
-echo "DB_PASSWORD=SerforDB@2025" > .env
-echo "OPENAI_API_KEY=tu_api_key_aqui" >> .env
-
-# Ejecutar API
+echo "OPENAI_API_KEY=tu_api_key_aqui" > .env
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# O con pip
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Ver documentación completa: [api/README.md](api/README.md)
+Ver [api/README.md](api/README.md) para más detalles.
 
-### 4. Configurar y Ejecutar Client
+#### 3. Configurar y Ejecutar Client
 
 ```bash
 cd client
 
-# Instalar dependencias
 npm install
-
-# Ejecutar en modo desarrollo
 npm run dev
 ```
 
-Ver documentación completa: [client/README.md](client/README.md)
+Ver [client/README.md](client/README.md) para más detalles.
 
-### 5. Acceder a las Aplicaciones
+#### 4. Acceder a las Aplicaciones
 
 - **Frontend:** http://localhost:5173
 - **API Docs:** http://localhost:8000/docs
-- **SQL Server:** localhost:1433
+- **API Health:** http://localhost:8000/health
+
+---
+
+### Opción 2: Demo con Streamlit
+
+#### 1. Iniciar Base de Datos
+
+```bash
+cd demo-db
+./build-and-run.sh  # o build-and-run.bat en Windows
+```
+
+#### 2. Ejecutar Demo Streamlit
+
+```bash
+cd demo-version
+
+# Crear entorno virtual e instalar dependencias
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tu OPENAI_API_KEY
+
+# Ejecutar Streamlit
+streamlit run streamlit_app.py
+```
+
+Ver [demo-version/README-streamlit.md](demo-version/README-streamlit.md) para más detalles.
+
+---
+
+## Estructura Detallada del Proyecto
+
+```
+naturai-serfor-demo/
+│
+├── api/                          # 🔧 Backend API (autocontenido)
+│   ├── agents/                   # Agentes de IA
+│   ├── database/                 # Gestión de BD y schemas
+│   ├── utils/                    # Utilidades (logger, debug)
+│   ├── app/
+│   │   ├── core/                 # Configuración
+│   │   ├── models/               # Modelos Pydantic
+│   │   ├── routes/               # Endpoints
+│   │   └── services/             # Lógica de negocio
+│   ├── pyproject.toml            # Dependencias UV
+│   ├── requirements.txt          # Dependencias pip
+│   └── README.md
+│
+├── client/                       # 🎨 Frontend React (autocontenido)
+│   ├── src/
+│   │   ├── components/           # Componentes UI
+│   │   ├── services/             # Cliente API
+│   │   ├── types/                # TypeScript types
+│   │   └── App.tsx
+│   ├── package.json
+│   └── README.md
+│
+├── demo-version/                 # 🚀 Demo Streamlit
+│   ├── agents/                   # Agentes de IA
+│   ├── database/                 # Gestión de BD
+│   ├── utils/                    # Utilidades
+│   ├── logs/                     # Logs de la demo
+│   ├── streamlit_app.py          # App principal
+│   ├── run_streamlit.py          # Script de ejecución
+│   ├── requirements.txt          # Dependencias
+│   ├── .env.example              # Plantilla de configuración
+│   ├── README-streamlit.md       # Documentación Streamlit
+│   └── README-Agents.md          # Documentación de agentes
+│
+├── demo-db/                      # 🗄️ Base de Datos Docker
+│   ├── init/                     # Scripts SQL (138MB)
+│   │   ├── setup.sql
+│   │   ├── DataPilotoIA.sql
+│   │   ├── scriptBDIA29102025.sql
+│   │   ├── PATCH_correccion_vistas.sql
+│   │   └── entrypoint.sh
+│   ├── Dockerfile                # SQL Server 2022
+│   ├── build-and-run.sh          # Script Linux/Mac
+│   ├── build-and-run.bat         # Script Windows
+│   ├── setup_database.py         # Setup y enrichment
+│   └── README-Docker.md          # Documentación Docker
+│
+├── .gitignore
+└── README.md                     # Esta documentación
+```
 
 ## Configuración de Variables de Entorno
 
-### API (.env en carpeta api/)
+### API (`api/.env`)
 
 ```env
 # Database
@@ -172,91 +224,38 @@ API_PORT=8000
 CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
-### Client (.env en carpeta client/)
+### Client (`client/.env`)
 
 ```env
 VITE_API_URL=http://localhost:8000/api
 ```
 
-## Estructura del Proyecto
+### Demo Version (`demo-version/.env`)
 
+```env
+# Database
+DB_SERVER=localhost
+DB_PORT=1433
+DB_DATABASE=SERFOR_BDDWH
+DB_USERNAME=sa
+DB_PASSWORD=SerforDB@2025
+DB_DRIVER=ODBC Driver 18 for SQL Server
+DB_TRUST_CERT=yes
+
+# OpenAI
+OPENAI_API_KEY=tu_api_key_aqui
 ```
-naturai-serfor-demo/
-│
-├── api/                          # Backend API
-│   ├── app/
-│   │   ├── core/                 # Configuración
-│   │   ├── models/               # Modelos Pydantic
-│   │   ├── routes/               # Endpoints
-│   │   ├── services/             # Lógica de negocio
-│   │   └── main.py               # App FastAPI
-│   ├── pyproject.toml            # Dependencias (uv)
-│   ├── .python-version           # Versión Python
-│   └── README.md
-│
-├── client/                       # Frontend React
-│   ├── src/
-│   │   ├── components/           # Componentes UI
-│   │   ├── services/             # Servicios API
-│   │   └── App.tsx
-│   ├── package.json              # Dependencias npm
-│   └── README.md
-│
-├── agents/                       # Agentes de IA
-│   ├── basic_agent.py
-│   ├── routing_agent.py
-│   ├── sql_agent.py
-│   └── visualization_agent.py
-│
-├── database/                     # Scripts y utilidades de BD
-├── utils/                        # Utilidades compartidas
-├── init/                         # Scripts SQL de inicialización
-│
-├── init/                         # Scripts SQL inicialización
-│   ├── setup.sql                 # Crea DB y schema
-│   ├── DataPilotoIA.sql          # Crea tablas
-│   └── entrypoint.sh             # Auto-setup script
-│
-├── streamlit_app.py              # App Streamlit (opcional)
-├── Dockerfile                    # SQL Server con auto-setup
-├── build-and-run.bat             # Windows DB setup
-├── build-and-run.sh              # Linux/Mac DB setup
-├── .gitignore
-└── README.md                     # Esta documentación
-```
-
-## Uso de Streamlit (Opcional)
-
-La aplicación Streamlit está disponible pero no se ejecuta en Docker:
-
-```bash
-# Desde la raíz del proyecto
-# Crear entorno virtual si no existe
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Configurar variables de entorno
-export OPENAI_API_KEY=tu_api_key_aqui
-export DB_SERVER=localhost
-export DB_PASSWORD=SerforDB@2025
-
-# Ejecutar Streamlit
-streamlit run streamlit_app.py
-```
-
-Accede en: http://localhost:8501
 
 ## Comandos Útiles
 
-### Docker (SQL Server)
+### Base de Datos (demo-db)
 
 ```bash
-# Construir y ejecutar (recomendado)
-build-and-run.bat        # Windows
-./build-and-run.sh       # Linux/Mac
+cd demo-db
+
+# Construir y ejecutar
+./build-and-run.sh              # Linux/Mac
+build-and-run.bat               # Windows
 
 # Ver logs
 docker logs -f serfor-sqlserver
@@ -264,11 +263,11 @@ docker logs -f serfor-sqlserver
 # Detener
 docker stop serfor-sqlserver
 
-# Eliminar contenedor
+# Eliminar y reconstruir
+docker stop serfor-sqlserver
 docker rm serfor-sqlserver
-
-# Eliminar volumen (reset completo de DB)
 docker volume rm sqlserver_data
+./build-and-run.sh
 ```
 
 ### API
@@ -276,17 +275,15 @@ docker volume rm sqlserver_data
 ```bash
 cd api
 
-# Instalar/actualizar dependencias
-uv sync
-
-# Ejecutar en desarrollo
+# Con UV
+uv sync                          # Instalar/actualizar deps
 uv run uvicorn app.main:app --reload
+uv run pytest                    # Tests
 
-# Ejecutar tests
-uv run pytest
-
-# Ver dependencias
-uv pip list
+# Con pip
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+pytest
 ```
 
 ### Client
@@ -294,56 +291,68 @@ uv pip list
 ```bash
 cd client
 
-# Instalar dependencias
-npm install
+npm install                      # Instalar dependencias
+npm run dev                      # Desarrollo
+npm run build                    # Build producción
+npm run preview                  # Preview build
+npm run lint                     # Linting
+```
 
-# Desarrollo
-npm run dev
+### Demo Streamlit
 
-# Build producción
-npm run build
+```bash
+cd demo-version
 
-# Preview build
-npm run preview
+pip install -r requirements.txt
+streamlit run streamlit_app.py
 ```
 
 ## Troubleshooting
 
-### SQL Server no inicia o scripts no se ejecutan
-```bash
-# Verificar logs de inicialización
-docker logs -f serfor-sqlserver
+### Base de Datos
 
-# Reconstruir desde cero
+**SQL Server no inicia:**
+```bash
+docker logs -f serfor-sqlserver  # Ver logs de error
+docker ps                        # Verificar que esté corriendo
+```
+
+**Reconstruir desde cero:**
+```bash
+cd demo-db
 docker stop serfor-sqlserver
 docker rm serfor-sqlserver
 docker volume rm sqlserver_data
-./build-and-run.bat  # o ./build-and-run.sh
-
-# Verificar que los scripts SQL existen
-ls init/setup.sql
-ls init/DataPilotoIA.sql
-ls init/entrypoint.sh
+./build-and-run.sh
 ```
 
-### Error de conexión API → SQL Server
+### API
+
+**Error de conexión a BD:**
 - Verifica que SQL Server esté corriendo: `docker ps`
-- Confirma las credenciales en `.env`
+- Confirma credenciales en `api/.env`
 - Verifica ODBC Driver: `odbcinst -q -d` (Linux/Mac)
 
-### Frontend no conecta con API
-- Verifica que la API esté corriendo en puerto 8000
-- Revisa configuración CORS en API
-- Confirma `VITE_API_URL` en `.env` del client
-
-### Puertos ocupados
+**Puerto 8000 ocupado:**
 ```bash
-# Verificar uso de puertos
-netstat -ano | findstr :8000    # Windows (API)
-netstat -ano | findstr :5173    # Windows (Client)
-netstat -ano | findstr :1433    # Windows (SQL Server)
+# Windows
+netstat -ano | findstr :8000
+taskkill /PID <PID> /F
 
-lsof -ti:8000                   # macOS/Linux
+# Linux/Mac
+lsof -ti:8000 | xargs kill -9
+```
+
+### Client
+
+**Frontend no conecta con API:**
+- Verifica que API esté corriendo en http://localhost:8000
+- Revisa `VITE_API_URL` en `client/.env`
+- Confirma CORS en `api/.env`
+
+**Puerto 5173 ocupado:**
+```bash
+npm run dev -- --port 3000       # Usar puerto diferente
 ```
 
 ## Testing
@@ -351,7 +360,8 @@ lsof -ti:8000                   # macOS/Linux
 ### API
 ```bash
 cd api
-uv run pytest
+uv run pytest                    # Con UV
+pytest                           # Con pip
 ```
 
 ### Client
@@ -362,18 +372,28 @@ npm run test
 
 ## Deployment
 
-Ver documentación específica en:
-- [api/README.md](api/README.md) - Deployment del backend
-- [client/README.md](client/README.md) - Deployment del frontend
+Cada servicio es independiente y puede ser desplegado por separado:
+
+- **API**: Ver [api/README.md](api/README.md) - Despliegue con Docker, Railway, Render, etc.
+- **Client**: Ver [client/README.md](client/README.md) - Despliegue en Vercel, Netlify, etc.
+- **Base de Datos**: Ver [demo-db/README-Docker.md](demo-db/README-Docker.md) - SQL Server en Docker
 
 ## Contribución
 
-1. Crea una rama para tu feature: `git checkout -b feature/nueva-funcionalidad`
-2. Realiza tus cambios
-3. Ejecuta tests: `cd api && uv run pytest`
-4. Commit: `git commit -m "Descripción del cambio"`
+1. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
+2. Realiza cambios en el servicio correspondiente (`api/`, `client/`, etc.)
+3. Ejecuta tests del servicio
+4. Commit: `git commit -m "feat: descripción del cambio"`
 5. Push: `git push origin feature/nueva-funcionalidad`
 6. Crea un Pull Request
+
+## Documentación Adicional
+
+- [API Backend](api/README.md) - Documentación completa del backend
+- [Client Frontend](client/README.md) - Documentación completa del frontend
+- [Demo Streamlit](demo-version/README-streamlit.md) - Guía de la versión demo
+- [Agentes IA](demo-version/README-Agents.md) - Sistema de agentes
+- [Base de Datos](demo-db/README-Docker.md) - Configuración de BD
 
 ## Licencia
 

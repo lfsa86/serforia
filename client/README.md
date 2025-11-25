@@ -170,10 +170,15 @@ npm install -D nombre-paquete
 
 ## Build y Deployment
 
-Para producción, después de ejecutar `npm run build`, puedes servir los archivos estáticos de la carpeta `dist/` con cualquier servidor web (Nginx, Apache, etc.) o servicios como Vercel, Netlify, etc.
+Para producción, después de ejecutar `npm run build`, puedes servir los archivos estáticos de la carpeta `dist/` con cualquier servidor web o servicios como Vercel, Netlify, etc.
 
-Ejemplo con un servidor estático simple:
+### Opción 1: Servidor estático simple
 ```bash
 npm install -g serve
 serve -s dist -p 80
 ```
+
+### Opción 2: Servicios de hosting
+- **Vercel**: `vercel --prod`
+- **Netlify**: Arrastra la carpeta `dist/` a netlify.com
+- **GitHub Pages**, **Firebase Hosting**, etc.

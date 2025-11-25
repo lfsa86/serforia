@@ -1,13 +1,8 @@
 """
 Service layer for orchestrator functionality
 """
-import sys
-import os
 from typing import Dict, Any, List
 import json
-
-# Add parent directories to path to import agents
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../../"))
 
 from agents.orchestrator import AgentOrchestrator
 from utils.logger import init_logger

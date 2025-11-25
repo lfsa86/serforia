@@ -16,6 +16,10 @@ logs/
 debug/
 .python-version
 
+# UV package manager
+.uv/
+api/.uv/
+
 # API (FastAPI backend)
 api/__pycache__/
 api/**/__pycache__/

@@ -228,7 +228,7 @@
     "indexes": [],
     "row_count_estimate": 448,
     "ai_enriched": false,
-    "last_updated": "2025-11-19T15:25:46.076137"
+    "last_updated": "2025-11-19T13:06:36.977642"
   },
   "V_AUTORIZACION_DEPOSITO": {
     "name": "V_AUTORIZACION_DEPOSITO",
@@ -465,7 +465,7 @@
     "indexes": [],
     "row_count_estimate": 4913,
     "ai_enriched": false,
-    "last_updated": "2025-11-19T15:25:46.577637"
+    "last_updated": "2025-11-19T13:06:37.540083"
   },
   "V_AUTORIZACION_DESBOSQUE": {
     "name": "V_AUTORIZACION_DESBOSQUE",
@@ -667,7 +667,7 @@
     "indexes": [],
     "row_count_estimate": 194,
     "ai_enriched": false,
-    "last_updated": "2025-11-19T15:25:46.672209"
+    "last_updated": "2025-11-19T13:06:37.799113"
   },
   "V_CAMBIO_USO": {
     "name": "V_CAMBIO_USO",
@@ -873,7 +873,7 @@
     "indexes": [],
     "row_count_estimate": 109,
     "ai_enriched": false,
-    "last_updated": "2025-11-19T15:25:46.752698"
+    "last_updated": "2025-11-19T13:06:38.052706"
   },
   "V_INFRACTOR": {
     "name": "V_INFRACTOR",
@@ -1091,7 +1091,7 @@
     "indexes": [],
     "row_count_estimate": 7455,
     "ai_enriched": false,
-    "last_updated": "2025-11-19T15:25:47.158100"
+    "last_updated": "2025-11-19T13:06:38.756627"
   },
   "V_LICENCIA_CAZA": {
     "name": "V_LICENCIA_CAZA",
@@ -1243,7 +1243,7 @@
     "indexes": [],
     "row_count_estimate": 24383,
     "ai_enriched": false,
-    "last_updated": "2025-11-19T15:25:47.904567"
+    "last_updated": "2025-11-19T13:06:39.900509"
   },
   "V_PLANTACION": {
     "name": "V_PLANTACION",
@@ -1478,7 +1478,7 @@
     "indexes": [],
     "row_count_estimate": 17288,
     "ai_enriched": false,
-    "last_updated": "2025-11-19T15:25:49.242254"
+    "last_updated": "2025-11-19T13:06:41.281926"
   },
   "V_TITULOHABILITANTE": {
     "name": "V_TITULOHABILITANTE",
@@ -1749,6 +1749,6 @@
     "indexes": [],
     "row_count_estimate": 10129,
     "ai_enriched": false,
-    "last_updated": "2025-11-19T15:25:49.691169"
+    "last_updated": "2025-11-19T13:06:42.506919"
   }
 }

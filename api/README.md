@@ -46,12 +46,23 @@ sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
 cd api
 ```
 
-2. Crea el entorno virtual e instala las dependencias con uv:
+2. **Opción A: Usando UV (recomendado para desarrollo local)**
+
+Crea el entorno virtual e instala las dependencias con uv:
 ```bash
 uv sync
 ```
 
 Esto creará automáticamente un entorno virtual en `.venv/` e instalará todas las dependencias del `pyproject.toml`.
+
+**Opción B: Usando pip (para repositorios remotos)**
+
+```bash
+python -m venv .venv
+source .venv/bin/activate    # macOS/Linux
+.venv\Scripts\activate       # Windows
+pip install -r requirements.txt
+```
 
 ## Configuración
 
@@ -126,7 +137,12 @@ api/
 │   ├── routes/        # Endpoints de la API
 │   ├── services/      # Lógica de negocio y orquestación
 │   └── main.py        # Punto de entrada de FastAPI
-├── pyproject.toml     # Configuración del proyecto y dependencias
+├── agents/            # Agentes de IA (orchestrator, planner, executor, etc.)
+├── database/          # Gestión de conexiones y esquemas de BD
+├── utils/             # Utilidades (logger, debug tools)
+├── pyproject.toml     # Configuración del proyecto y dependencias (UV)
+├── requirements.txt   # Dependencias para pip (compatibilidad)
+├── uv.lock            # Lock file de UV
 ├── .python-version    # Versión de Python requerida
 ├── run.py             # Script de inicio
 └── README.md          # Esta documentación
