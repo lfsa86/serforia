@@ -73,9 +73,9 @@ class OrchestratorService:
                 response_data["visualization_data"] = viz_data
                 print(f"📊 DEBUG - Visualization data extracted: {len(viz_data)} visualizations")
 
-            # Include workflow data if requested
+            # Include workflow data if requested (clean non-serializable objects)
             if include_workflow:
-                response_data["workflow_data"] = workflow_data
+                response_data["workflow_data"] = self._clean_workflow_data(workflow_data)
 
             self.logger.log_agent_activity(
                 "OrchestratorService",
@@ -141,6 +141,19 @@ class OrchestratorService:
                     continue
 
         return sql_queries if sql_queries else None
+
+    def _clean_workflow_data(self, workflow_data: Dict) -> Dict:
+        """Clean workflow data by removing non-serializable objects"""
+        clean_data = {}
+        for key, value in workflow_data.items():
+            # Skip non-serializable objects
+            if key == 'task_manager' or callable(value):
+                continue
+            # Skip complex objects that might not be serializable
+            if hasattr(value, '__dict__') and not isinstance(value, (dict, list, str, int, float, bool, type(None))):
+                continue
+            clean_data[key] = value
+        return clean_data
 
 
 # Global instance (singleton pattern)
