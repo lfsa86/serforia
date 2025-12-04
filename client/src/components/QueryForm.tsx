@@ -35,7 +35,7 @@ export const QueryForm = ({ onSubmit, isLoading }: QueryFormProps) => {
           id="query"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ejemplo: ¿Cuáles son las especies más comunes en la región Amazonas?"
+          placeholder="Ejemplo: ¿Puedes hacer un resumen de las superficies de titulo habitante según departamento?"
           rows={4}
           disabled={isLoading}
         />

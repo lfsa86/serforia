@@ -149,36 +149,35 @@ class DatabaseConnectionManager:
                 "error": str(e)
             }
 
-    def execute_query_safely(self, query: str, max_rows: int = 1000) -> Dict[str, Any]:
+    def execute_query_safely(self, query: str) -> Dict[str, Any]:
         """
-        Execute query with safety limits and SQL Server syntax conversion
+        Execute query with SQL Server syntax conversion (no row limits)
 
         Args:
             query: SQL query
-            max_rows: Maximum number of rows to return
 
         Returns:
-            Query results with safety checks
+            Query results
         """
-        # Convert MySQL/PostgreSQL syntax to SQL Server
-        query = self._convert_to_sqlserver_syntax(query, max_rows)
+        # Convert MySQL/PostgreSQL syntax to SQL Server (LIMIT -> TOP)
+        query = self._convert_to_sqlserver_syntax(query)
 
         return self.execute_query(query)
 
-    def _convert_to_sqlserver_syntax(self, query: str, max_rows: int = 1000) -> str:
+    def _convert_to_sqlserver_syntax(self, query: str) -> str:
         """
-        Convert MySQL/PostgreSQL syntax to SQL Server syntax
+        Convert MySQL/PostgreSQL syntax to SQL Server syntax.
+        Only converts LIMIT clauses to TOP - does NOT add limits if not specified.
 
         Args:
             query: Original SQL query
-            max_rows: Maximum rows for TOP clause
 
         Returns:
             Query converted to SQL Server syntax
         """
         import re
 
-        # Convert LIMIT to TOP
+        # Only convert LIMIT to TOP if LIMIT is present
         if 'LIMIT' in query.upper():
             # Pattern: LIMIT N or LIMIT N OFFSET M
             limit_pattern = r'\s+LIMIT\s+(\d+)(?:\s+OFFSET\s+(\d+))?'
@@ -190,22 +189,14 @@ class DatabaseConnectionManager:
 
                 if offset_num:
                     # LIMIT N OFFSET M -> OFFSET M ROWS FETCH NEXT N ROWS ONLY
-                    # Remove LIMIT clause
                     query = re.sub(limit_pattern, '', query, flags=re.IGNORECASE)
-                    # Add ORDER BY if not present (required for OFFSET)
                     if 'ORDER BY' not in query.upper():
                         query = query.rstrip(';') + ' ORDER BY (SELECT NULL)'
                     query += f' OFFSET {offset_num} ROWS FETCH NEXT {limit_num} ROWS ONLY'
                 else:
                     # LIMIT N -> TOP N
-                    # Remove LIMIT clause
                     query = re.sub(limit_pattern, '', query, flags=re.IGNORECASE)
-                    # Add TOP clause (handle DISTINCT)
-                    query = self._add_top_clause(query, limit_num)
-
-        # Add TOP if no limit specified and it's a SELECT
-        elif query.strip().upper().startswith('SELECT') and 'TOP' not in query.upper() and 'OFFSET' not in query.upper():
-            query = self._add_top_clause(query, max_rows)
+                    query = self._add_top_clause(query, int(limit_num))
 
         return query
 
@@ -224,13 +215,11 @@ class DatabaseConnectionManager:
         """
         import re
 
-        # Pattern to match SELECT with optional DISTINCT/ALL
-        # Handles: SELECT, SELECT DISTINCT, SELECT ALL
         pattern = r'^(\s*SELECT\s+)(DISTINCT\s+|ALL\s+)?'
 
         def replace_select(match):
-            select_part = match.group(1)  # "SELECT "
-            modifier = match.group(2) or ""  # "DISTINCT " or "ALL " or ""
+            select_part = match.group(1)
+            modifier = match.group(2) or ""
             return f"{select_part}{modifier}TOP {limit} "
 
         return re.sub(pattern, replace_select, query, count=1, flags=re.IGNORECASE)

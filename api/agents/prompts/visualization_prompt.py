@@ -76,6 +76,10 @@ REGLAS:
 ❌ NO uses st.plotly_chart()
 ❌ NO generes datos ficticios
 
+UNIDADES:
+- Los valores de MULTAS están en UIT (Unidad Impositiva Tributaria), NO en soles
+- En títulos y etiquetas usa "UIT" (ej: "Multas (UIT)", NO "Multas (S/)")
+
 GENERA MÁXIMO 1-2 VISUALIZACIONES que realmente aporten valor.
 No generes por generar - calidad sobre cantidad.
 

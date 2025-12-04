@@ -44,8 +44,14 @@ class OrchestratorService:
 
             if not result.get("success"):
                 self.logger.log_error("OrchestratorService", f"Query processing failed: {result.get('error')}")
-                print(f"🔍 DEBUG - Returning error result: {result}")
-                return result
+                print(f"🔍 DEBUG - Returning error result")
+                # Return clean error response (no workflow_data with non-serializable objects)
+                return {
+                    "success": False,
+                    "error": result.get("error", "Unknown error"),
+                    "final_response": result.get("final_response", result.get("error", "")),
+                    "agents_used": result.get("agents_used", [])
+                }
 
             # Extract and format data for API response
             response_data = {

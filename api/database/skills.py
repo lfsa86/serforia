@@ -16,18 +16,16 @@ logger = get_logger()
 @skill(
     description="Execute a safe SQL SELECT query on the SERFOR database",
     parameters={
-        "query": "SQL SELECT query to execute",
-        "max_rows": "Maximum number of rows to return (default: 100)"
+        "query": "SQL SELECT query to execute"
     }
 )
-def execute_select_query(query: str, max_rows: int = 100) -> str:
+def execute_select_query(query: str) -> str:
     """
     Execute a SELECT query safely on the database
 
     Args:
         query: SQL SELECT query
-        max_rows: Maximum rows to return
-
+        
     Returns:
         JSON string with query results
     """
@@ -41,7 +39,7 @@ def execute_select_query(query: str, max_rows: int = 100) -> str:
             })
 
         # Execute query with safety limits
-        result = db_manager.execute_query_safely(query, max_rows)
+        result = db_manager.execute_query_safely(query)
 
         # Log the executed query
         print(f"🔍 SQL EJECUTADO: {query}")
@@ -368,17 +366,15 @@ def aggregate_table_data(
 @skill(
     description="Execute complex SQL queries with JOINs between tables",
     parameters={
-        "query": "Complete SQL query with JOINs, WHERE clauses, etc.",
-        "max_rows": "Maximum number of rows to return (default: 100)"
+        "query": "Complete SQL query with JOINs, WHERE clauses, etc."
     }
 )
-def execute_complex_query(query: str, max_rows: int = 100) -> str:
+def execute_complex_query(query: str) -> str:
     """
     Execute complex SQL queries that involve JOINs, subqueries, etc.
 
     Args:
         query: Complete SQL query string
-        max_rows: Maximum rows to return
 
     Returns:
         JSON string with query results
@@ -393,7 +389,7 @@ def execute_complex_query(query: str, max_rows: int = 100) -> str:
             })
 
         # Execute complex query
-        result = db_manager.execute_query_safely(query, max_rows)
+        result = db_manager.execute_query_safely(query)
 
         # Log the executed query
         print(f"🔍 COMPLEX SQL EJECUTADO: {query}")

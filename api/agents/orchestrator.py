@@ -200,9 +200,13 @@ class AgentOrchestrator:
 
 
 
+            # Clean workflow_data before returning (remove non-serializable objects)
+            clean_workflow = {k: v for k, v in workflow_data.items()
+                            if k not in ('task_manager', 'schema_info') and not callable(v)}
+
             return {
                 "success": True,
-                "workflow_data": workflow_data,
+                "workflow_data": clean_workflow,
                 "executive_response": response_result.get("executive_response", ""),
                 "final_response": response_result.get("final_response", ""),
                 "execution_summary": exec_summary,
@@ -213,8 +217,7 @@ class AgentOrchestrator:
         except Exception as e:
             return {
                 "success": False,
-                "error": str(e),
-                "workflow_data": workflow_data
+                "error": str(e)
             }
 
     def _should_generate_visualization(self, query_results: list, user_query: str) -> bool:
