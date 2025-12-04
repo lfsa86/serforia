@@ -200,14 +200,40 @@ class DatabaseConnectionManager:
                     # LIMIT N -> TOP N
                     # Remove LIMIT clause
                     query = re.sub(limit_pattern, '', query, flags=re.IGNORECASE)
-                    # Add TOP clause
-                    query = query.replace('SELECT', f'SELECT TOP {limit_num}', 1)
+                    # Add TOP clause (handle DISTINCT)
+                    query = self._add_top_clause(query, limit_num)
 
         # Add TOP if no limit specified and it's a SELECT
         elif query.strip().upper().startswith('SELECT') and 'TOP' not in query.upper() and 'OFFSET' not in query.upper():
-            query = query.replace('SELECT', f'SELECT TOP {max_rows}', 1)
+            query = self._add_top_clause(query, max_rows)
 
         return query
+
+    def _add_top_clause(self, query: str, limit: int) -> str:
+        """
+        Add TOP clause to SELECT query, handling DISTINCT correctly.
+
+        SQL Server requires: SELECT DISTINCT TOP N ... (not SELECT TOP N DISTINCT)
+
+        Args:
+            query: SQL query
+            limit: Number for TOP clause
+
+        Returns:
+            Query with TOP clause added correctly
+        """
+        import re
+
+        # Pattern to match SELECT with optional DISTINCT/ALL
+        # Handles: SELECT, SELECT DISTINCT, SELECT ALL
+        pattern = r'^(\s*SELECT\s+)(DISTINCT\s+|ALL\s+)?'
+
+        def replace_select(match):
+            select_part = match.group(1)  # "SELECT "
+            modifier = match.group(2) or ""  # "DISTINCT " or "ALL " or ""
+            return f"{select_part}{modifier}TOP {limit} "
+
+        return re.sub(pattern, replace_select, query, count=1, flags=re.IGNORECASE)
 
     def get_table_sample(self, schema: str, table: str, limit: int = 10) -> Dict[str, Any]:
         """Get a sample of data from a table"""

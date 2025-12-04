@@ -18,6 +18,7 @@ export interface VisualizationData {
 
 export interface QueryResponse {
   success: boolean;
+  executive_response: string;
   final_response: string;
   agents_used: string[];
   data?: Record<string, any>[];

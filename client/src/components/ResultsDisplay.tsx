@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import type { QueryResponse } from '../types';
 import { DataTable } from './DataTable';
 import { SQLQueriesDisplay } from './SQLQueriesDisplay';
 import { VisualizationDisplay } from './VisualizationDisplay';
-import { Download, CheckCircle, AlertCircle } from 'lucide-react';
+import { Download, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -11,6 +12,8 @@ interface ResultsDisplayProps {
 }
 
 export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
+  const [isDataExpanded, setIsDataExpanded] = useState(false);
+
   if (!results) return null;
 
   const downloadCSV = () => {
@@ -66,55 +69,66 @@ export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
 
       {results.success && (
         <>
-        {/* SQL Queries */}
-        {results.sql_queries && results.sql_queries.length > 0 && (
-          <SQLQueriesDisplay queries={results.sql_queries} />
-        )}
-          {/* Data Table */}
-          {results.data && results.data.length > 0 && (
-            <div className="data-section">
-              <div className="section-header">
-                <h3>📊 Datos Encontrados</h3>
-                <div className="metrics">
-                  <span className="metric">
-                    <strong>Registros:</strong> {results.data.length}
-                  </span>
-                  <span className="metric">
-                    <strong>Columnas:</strong> {Object.keys(results.data[0]).length}
-                  </span>
-                </div>
+          {/* 1. Executive Response - Main focus for executives */}
+          {results.executive_response && (
+            <div className="executive-response-section">
+              <h3>Respuesta</h3>
+              <div className="executive-response-content">
+                <p>{results.executive_response}</p>
               </div>
-              <DataTable data={results.data} />
-              <button onClick={downloadCSV} className="download-btn">
-                <Download size={16} />
-                Descargar CSV
-              </button>
             </div>
           )}
 
-          {/* Visualizations */}
+          {/* 2. SQL Queries (collapsible, closed by default) */}
+          {results.sql_queries && results.sql_queries.length > 0 && (
+            <SQLQueriesDisplay queries={results.sql_queries} />
+          )}
+
+          {/* 3. Data Table (collapsible, closed by default) */}
+          {results.data && results.data.length > 0 && (
+            <div className="data-section-collapsible">
+              <button
+                className="expand-button"
+                onClick={() => setIsDataExpanded(!isDataExpanded)}
+              >
+                <span>📊 Ver Datos Encontrados ({results.data.length} registros, {Object.keys(results.data[0]).length} columnas)</span>
+                <div className="expand-button-actions">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); downloadCSV(); }}
+                    className="download-btn-inline"
+                    title="Descargar CSV"
+                  >
+                    <Download size={16} />
+                    CSV
+                  </button>
+                  {isDataExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </div>
+              </button>
+
+              {isDataExpanded && (
+                <div className="data-content">
+                  <DataTable data={results.data} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 4. Detailed Response */}
+          {results.final_response && (
+            <div className="response-section">
+              <h3>Análisis Detallado</h3>
+              <div className="response-content markdown-content">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {results.final_response}
+                </ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 5. Visualizations */}
           {results.visualization_data && results.visualization_data.length > 0 && (
             <VisualizationDisplay visualizations={results.visualization_data} />
           )}
-
-
-          {/* Response Summary */}
-          <div className="response-section">
-            <h3>📝 Resumen Detallado</h3>
-            <div className="response-content markdown-content">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {results.final_response}
-              </ReactMarkdown>
-            </div>
-          </div>
-
-          {/* Agents Used 
-          {results.agents_used && results.agents_used.length > 0 && (
-            <div className="agents-section">
-              <strong>🤖 Agentes utilizados:</strong>{' '}
-              {results.agents_used.join(', ')}
-            </div>
-          )}*/}
         </>
       )}
     </div>

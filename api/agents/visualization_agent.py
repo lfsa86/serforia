@@ -11,6 +11,7 @@ import plotly.graph_objects as go
 import json
 
 from .base_agent import BaseAgent
+from .prompts.visualization_prompt import ROLE_SETUP, VISUALIZATION_PROMPT_TEMPLATE
 
 
 class VisualizationAgent(BaseAgent):
@@ -19,10 +20,7 @@ class VisualizationAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             name="Visualization",
-            role_setup="""Eres un especialista en visualizaciones Plotly para datos SERFOR (forestales de Perú).
-
-Tu trabajo es analizar los datos y generar código Python/Plotly ejecutable que cree visualizaciones informativas.
-Las visualizaciones se exportarán como JSON para renderizarse en el frontend React con react-plotly.js.""",
+            role_setup=ROLE_SETUP,
             temperature=0.3,
             max_token=2000
         )
@@ -46,6 +44,16 @@ Las visualizaciones se exportarán como JSON para renderizarse en el frontend Re
             prompt = self._build_visualization_prompt(df, user_query)
             response = self.run(prompt)
 
+            print(f"📊 DEBUG VisualizationAgent response preview: {response[:200]}...")
+
+            # Check if LLM decided NOT to visualize
+            if "<NO_VISUALIZACION>" in response:
+                import re
+                reason_match = re.search(r'<NO_VISUALIZACION>(.*?)</NO_VISUALIZACION>', response, re.DOTALL)
+                reason = reason_match.group(1).strip() if reason_match else "Sin razón especificada"
+                print(f"📊 VisualizationAgent decidió NO visualizar: {reason}")
+                return {"has_visualizations": False, "skip_reason": reason}
+
             # Extract code blocks
             code_blocks = self._extract_response_blocks(response, "CODIGO_PLOTLY")
 
@@ -55,6 +63,8 @@ Las visualizaciones se exportarán como JSON para renderizarse en el frontend Re
 
             # Execute code and capture figures
             viz_data = self._execute_and_capture_figures(code_blocks, df)
+
+            print(f"📊 VisualizationAgent generó {len(viz_data)} visualización(es)")
 
             return {
                 "has_visualizations": len(viz_data) > 0,
@@ -157,65 +167,18 @@ if 'fig' in locals():
         """Build prompt to generate Plotly visualization code"""
         sample_data = df.head(3).to_dict('records') if len(df) > 0 else []
 
-        return f"""
-Eres un especialista en visualizaciones Plotly para datos SERFOR (forestales de Perú).
+        # Analyze column types for better context
+        numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+        text_cols = df.select_dtypes(include=['object']).columns.tolist()
 
-CONSULTA USUARIO: "{user_query}"
-COLUMNAS DISPONIBLES: {list(df.columns)}
-MUESTRA DE DATOS: {sample_data}
-TOTAL FILAS: {len(df)}
-
-TU TRABAJO:
-1. ANALIZAR los datos y determinar 2-3 visualizaciones apropiadas
-2. GENERAR código Python/Plotly ejecutable
-3. Cada visualización debe asignarse a una variable 'fig'
-4. USAR títulos descriptivos en español
-
-TIPOS DE VISUALIZACIÓN SEGÚN DATOS:
-- px.bar() → Conteos, comparaciones (titulares, especies, regiones)
-- px.line() → Tendencias temporales (multas por año)
-- px.histogram() → Distribuciones (montos, superficies)
-- px.scatter() → Correlaciones (superficie vs multa)
-- px.pie() → Proporciones
-
-REGLAS CRÍTICAS:
-✅ USA la variable 'df' (ya disponible)
-✅ VALIDA columnas antes de usar: if 'columna' in df.columns:
-✅ MANEJA casos con pocos datos: if len(df) > 5:
-✅ CADA gráfico debe asignarse a 'fig': fig = px.bar(...)
-✅ Importa px y go ya están disponibles
-❌ NO uses imports
-❌ NO generes datos ficticios
-❌ NO uses st.plotly_chart() ni ninguna función de Streamlit
-
-EJEMPLO DE RESPUESTA:
-
-<CODIGO_PLOTLY>
-# Visualización 1: Top 10 Titulares
-if 'TX_NombreTitular' in df.columns and len(df) > 5:
-    top_titulares = df['TX_NombreTitular'].value_counts().head(10)
-    fig = px.bar(
-        x=top_titulares.index,
-        y=top_titulares.values,
-        title="Top 10 Titulares con Más Registros",
-        labels={{'x': 'Titular', 'y': 'Registros'}}
-    )
-</CODIGO_PLOTLY>
-
-<CODIGO_PLOTLY>
-# Visualización 2: Distribución de Multas
-if 'NU_MultaUIT' in df.columns and len(df) > 10:
-    fig = px.histogram(
-        df,
-        x='NU_MultaUIT',
-        title="Distribución de Multas (UIT)",
-        labels={{'NU_MultaUIT': 'Multa (UIT)'}}
-    )
-</CODIGO_PLOTLY>
-
-Responde SOLO con bloques <CODIGO_PLOTLY>, sin explicaciones adicionales.
-Genera 2-3 visualizaciones relevantes según los datos disponibles.
-"""
+        return VISUALIZATION_PROMPT_TEMPLATE.format(
+            user_query=user_query,
+            columns=list(df.columns),
+            numeric_cols=numeric_cols,
+            text_cols=text_cols,
+            sample_data=sample_data,
+            total_rows=len(df)
+        )
 
     def _extract_response_blocks(self, response: str, block_type: str) -> List[str]:
         """Extract code blocks from agent response"""

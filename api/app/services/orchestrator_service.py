@@ -50,6 +50,7 @@ class OrchestratorService:
             # Extract and format data for API response
             response_data = {
                 "success": True,
+                "executive_response": result.get("executive_response", ""),
                 "final_response": result.get("final_response", ""),
                 "agents_used": result.get("agents_used", []),
             }
@@ -99,21 +100,32 @@ class OrchestratorService:
             }
 
     def _extract_table_data(self, execution_results: List[Dict]) -> List[Dict]:
-        """Extract table data from execution results"""
-        for result in execution_results:
+        """Extract table data from execution results - combines ALL successful query results"""
+        all_data = []
+        all_columns = set()
+
+        for i, result in enumerate(execution_results):
             if result.get("status") == "success" and isinstance(result.get("result"), str):
                 try:
                     parsed_result = json.loads(result["result"])
-                    print(f"🔍 DEBUG - Parsed result: {parsed_result}")
+                    task_desc = result.get("description", result.get("task_description", f"Query {i+1}"))
+                    print(f"🔍 DEBUG - Parsed result for '{task_desc}': {len(parsed_result.get('data', []))} rows")
+
                     if parsed_result.get("success") and "data" in parsed_result:
                         data = parsed_result["data"]
-                        print(f"📊 DEBUG - Data extracted: {len(data)} rows")
                         if isinstance(data, list) and len(data) > 0:
-                            return data
+                            # Track columns from this result
+                            result_columns = set(data[0].keys())
+                            all_columns.update(result_columns)
+                            all_data.extend(data)
+                            print(f"📊 DEBUG - Added {len(data)} rows from '{task_desc}' (total: {len(all_data)})")
                 except Exception as e:
                     print(f"❌ DEBUG - Error parsing result: {e}")
                     continue
-        return None
+
+        if all_data:
+            print(f"📊 DEBUG - Total combined data: {len(all_data)} rows, {len(all_columns)} unique columns")
+        return all_data if all_data else None
 
     def _extract_sql_queries(self, execution_results: List[Dict]) -> List[Dict]:
         """Extract SQL queries from execution results"""
@@ -128,14 +140,14 @@ class OrchestratorService:
                             "query": parsed_result["query_executed"],
                             "success": parsed_result.get("success", False),
                             "row_count": parsed_result.get("row_count", 0),
-                            "task_description": result.get("task_description", "SQL Query")
+                            "task_description": result.get("description", result.get("task_description", "SQL Query"))
                         })
                     elif "query_attempted" in parsed_result:
                         sql_queries.append({
                             "query": parsed_result["query_attempted"],
                             "success": False,
                             "error": parsed_result.get("error", "Unknown error"),
-                            "task_description": result.get("task_description", "SQL Query")
+                            "task_description": result.get("description", result.get("task_description", "SQL Query"))
                         })
                 except Exception:
                     continue

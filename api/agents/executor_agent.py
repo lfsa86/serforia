@@ -1,12 +1,12 @@
 """
 Executor Agent - Executes database queries and data operations
 """
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from .base_agent import BaseAgent
 from .task_manager import TaskManager, ExecutionTask, TaskStatus
+from .prompts.executor_prompt import ROLE_SETUP, TASK_PROMPT_BASE, RETRY_CONTEXT, TASK_PROMPTS
 from instantneo import SkillManager
 import time
-from typing import List
 from utils.logger import get_logger
 
 class ExecutorAgent(BaseAgent):
@@ -44,51 +44,7 @@ class ExecutorAgent(BaseAgent):
 
         super().__init__(
             name="Executor",
-            role_setup="""Eres un agente ejecutor especializado en realizar consultas y operaciones sobre la base de datos SERFOR_BDDWH.
-
-Tienes acceso a skills especializadas para:
-- execute_select_query: Consultas SELECT simples
-- execute_complex_query: Consultas complejas con JOINs entre tablas
-- get_table_schemas: Obtener esquemas de tablas
-- search_table_data: Buscar datos con filtros
-- aggregate_table_data: Agregaciones (COUNT, SUM, AVG, MIN, MAX)
-- count_table_rows: Contar filas de tablas
-- get_table_sample: Obtener muestras de datos
-
-VISTAS DISPONIBLES:
-- Dir.V_INFRACTOR: Información de infracciones forestales
-- Dir.V_TITULOHABILITANTE: Información de títulos habilitantes
-- Dir.V_LICENCIA_CAZA: Licencias de caza
-- Dir.V_PLANTACION: Plantaciones forestales
-- Dir.V_AUTORIZACION_CTP: Autorizaciones CTP
-- Dir.V_AUTORIZACION_DEPOSITO: Autorizaciones de depósito
-- Dir.V_AUTORIZACION_DESBOSQUE: Autorizaciones de desbosque
-- Dir.V_CAMBIO_USO: Cambios de uso
-
-IMPORTANTE - SINTAXIS SQL SERVER:
-- USA 'TOP N' en lugar de 'LIMIT N'
-- Para paginación: 'OFFSET X ROWS FETCH NEXT Y ROWS ONLY'
-- NO combines TOP con OFFSET en la misma query
-- Ejemplos correctos:
-  * SELECT TOP 10 * FROM tabla ORDER BY columna
-  * SELECT * FROM tabla ORDER BY columna OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY
-
-ESTRATEGIA PARA CONSULTAS COMPLEJAS:
-- Para consultas que requieren relacionar ambas tablas, usa execute_complex_query
-- Construye queries SQL completas con JOINs en lugar de múltiples pasos
-- NO inventes tablas temporales ni resultados intermedios
-- Usa las columnas reales que existen en el esquema
-
-Ejecutas tareas individuales según su tipo de acción:
-- validate: Validar parámetros y datos
-- query: Realizar consultas SQL (simple o compleja según necesidad)
-- transform: Procesar datos ya obtenidos
-- calculate: Realizar cálculos sobre datos existentes
-- aggregate: Agregar datos con funciones SQL
-- format: Formatear resultados finales
-
-Para cada tarea, proporciona un resultado claro y estructurado.
-Si encuentras errores, describe específicamente qué falló y por qué.""",
+            role_setup=ROLE_SETUP,
             temperature=0.1,
             skills=skills
         )
@@ -235,50 +191,23 @@ Si encuentras errores, describe específicamente qué falló y por qué.""",
 
     def generate_task_prompt(self, task: ExecutionTask) -> str:
         """Generate appropriate prompt for task execution with retry context"""
-        base_prompt = f"""
-        Ejecuta la siguiente tarea:
-
-        Descripción: {task.description}
-        Tipo de acción: {task.action_type}
-        Parámetros: {task.parameters}
-        """
+        base_prompt = TASK_PROMPT_BASE.format(
+            description=task.description,
+            action_type=task.action_type,
+            parameters=task.parameters
+        )
 
         # Add retry context if this is not the first attempt
         if task.retry_count > 0:
-            base_prompt += f"""
+            base_prompt += RETRY_CONTEXT.format(
+                retry_number=task.retry_count + 1,
+                error_message=task.error_message
+            )
 
-        IMPORTANTE - INTENTO #{task.retry_count + 1}:
-        Tu intento anterior falló con el siguiente error:
-        {task.error_message}
+        # Get action-specific prompt or default
+        action_suffix = TASK_PROMPTS.get(task.action_type, TASK_PROMPTS["default"])
 
-        Cambia tu estrategia para evitar el mismo error. Considera:
-        - Usar una skill diferente
-        - Simplificar la consulta
-        - Probar un enfoque alternativo
-        """
-
-        # Customize prompt based on action type
-        if task.action_type == "validate":
-            return base_prompt + "\nValida los parámetros y datos especificados. Retorna 'VALID' si todo está correcto, o describe los problemas encontrados."
-
-        elif task.action_type == "query":
-            return base_prompt + "\nEjecuta la consulta especificada. Si necesitas relacionar tablas, usa execute_complex_query con un JOIN completo. NO uses tablas temporales. Retorna los resultados estructurados."
-
-        elif task.action_type == "transform":
-            return base_prompt + "\nTransforma los datos según los parámetros. Retorna los datos transformados."
-
-        elif task.action_type == "calculate":
-            return base_prompt + "\nRealiza los cálculos especificados. Retorna los resultados numéricos."
-
-        elif task.action_type == "aggregate":
-            return base_prompt + "\nAgrega los datos según los parámetros. Retorna el resumen agregado."
-
-        elif task.action_type == "format":
-            # Format tasks should not be handled by executor - skip and mark as failed
-            return "ERROR: Las tareas de tipo 'format' deben ser manejadas por el Response Agent, no el Executor."
-
-        else:
-            return base_prompt + "\nEjecuta la operación especificada y retorna el resultado."
+        return base_prompt + "\n" + action_suffix
 
     def attempt_recovery(self, task_manager: TaskManager) -> List[Dict[str, Any]]:
         """

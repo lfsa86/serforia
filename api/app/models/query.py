@@ -14,6 +14,7 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     """Response model for query results"""
     success: bool
+    executive_response: str = ""
     final_response: str = ""
     agents_used: List[str] = []
     data: Optional[List[Dict[str, Any]]] = None

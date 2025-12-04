@@ -149,28 +149,38 @@ class AgentOrchestrator:
             workflow_data.update(response_result)
 
             # Step 5: Generate visualizations if applicable
-            # Try to extract tables from the response
+            # Try to extract tables from the response - combine ALL results
             execution_results = workflow_data.get("execution_results", [])
 
-            # Look for successful query results
-            query_results = None
+            # Collect ALL successful query results
+            query_results = []
             for result in execution_results:
                 if result.get("status") == "success" and isinstance(result.get("result"), str):
                     try:
                         # Try to parse JSON result from skills
                         parsed_result = json.loads(result["result"])
                         if parsed_result.get("success") and "data" in parsed_result:
-                            query_results = parsed_result["data"]
-                            break
+                            data = parsed_result["data"]
+                            if isinstance(data, list) and len(data) > 0:
+                                query_results.extend(data)
+                                print(f"   📊 Agregando {len(data)} filas al dataset de visualización")
                     except:
                         continue
 
-            if query_results and len(query_results) > 0:
+            print(f"   📊 Total datos para visualización: {len(query_results)} filas") if query_results else None
+
+            # Evaluate if visualization makes sense before calling the agent
+            should_visualize = self._should_generate_visualization(query_results, user_query)
+
+            if should_visualize:
                 print("📊 Generando visualizaciones...")
                 self.logger.log_agent_activity("orchestrator", "starting_visualization_generation", {"query_results": query_results, "user_query": user_query})
                 visualization_result = self.visualization_agent.process({"query_results": query_results, "user_query": user_query})
                 self.logger.log_agent_activity("visualization", "process_completed", {"query_results": query_results, "user_query": user_query}, visualization_result)
                 workflow_data.update(visualization_result)
+            else:
+                print("📊 Visualización omitida (no aporta valor según heurísticas)")
+                self.logger.log_agent_activity("orchestrator", "visualization_skipped", {"reason": "heuristics", "user_query": user_query})
 
             # Debug file for workflow_data and execution_result if needed
             if debug:
@@ -193,6 +203,7 @@ class AgentOrchestrator:
             return {
                 "success": True,
                 "workflow_data": workflow_data,
+                "executive_response": response_result.get("executive_response", ""),
                 "final_response": response_result.get("final_response", ""),
                 "execution_summary": exec_summary,
                 "agents_used": [agent.name for agent in self.agents.values()],
@@ -205,6 +216,52 @@ class AgentOrchestrator:
                 "error": str(e),
                 "workflow_data": workflow_data
             }
+
+    def _should_generate_visualization(self, query_results: list, user_query: str) -> bool:
+        """
+        Heuristics to determine if visualization would add value.
+
+        Returns False for cases where a chart wouldn't help:
+        - Single value results (counts, sums, averages)
+        - Very few rows with few columns
+        - Simple list queries without comparable dimensions
+        """
+        if not query_results or len(query_results) == 0:
+            return False
+
+        num_rows = len(query_results)
+        num_cols = len(query_results[0]) if query_results else 0
+
+        # Case 1: Single row = single value result (e.g., "total: 523")
+        if num_rows == 1:
+            print(f"   → Heurística: 1 fila = valor único, no visualizar")
+            return False
+
+        # Case 2: Very few rows (2-3) with just 1-2 columns
+        if num_rows <= 3 and num_cols <= 2:
+            print(f"   → Heurística: {num_rows} filas x {num_cols} cols = muy pocos datos")
+            return False
+
+        # Case 3: Check if query is a simple count/sum question
+        simple_query_patterns = [
+            "cuántos", "cuantos", "cuántas", "cuantas",
+            "total de", "suma de", "suma total",
+            "cantidad de", "número de", "numero de"
+        ]
+        query_lower = user_query.lower()
+
+        # If it's a simple count AND has few rows, skip
+        if any(pattern in query_lower for pattern in simple_query_patterns) and num_rows <= 5:
+            print(f"   → Heurística: consulta de conteo simple con {num_rows} filas")
+            return False
+
+        # Case 4: Minimum threshold - need at least 3 rows for meaningful visualization
+        if num_rows < 3:
+            print(f"   → Heurística: menos de 3 filas, insuficiente para visualizar")
+            return False
+
+        print(f"   → Heurística: {num_rows} filas x {num_cols} cols = proceder con visualización")
+        return True
 
     def get_agent_info(self) -> Dict[str, Dict[str, str]]:
         """Get information about all agents"""

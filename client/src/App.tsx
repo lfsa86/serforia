@@ -39,12 +39,27 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-content">
-          <h1>SERFOR - Sistema de Consulta Forestal</h1>
+          <h1>SERFORia- Sistema de Consulta Forestal v1.0</h1>
           <p>Sistema inteligente para consultas sobre datos forestales del Perú</p>
         </div>
       </header>
 
       <main className="app-main">
+        <section className="welcome-section">
+          <h2>¡Bienvenido!</h2>
+          <p>Esta aplicación te permite consultar la base de datos de la DIR sobre:</p>
+          <ul>
+            <li><strong>Autorizaciones:</strong> CTP, desbosque, depósito y cambio de uso</li>
+            <li><strong>Títulos habilitantes</strong></li>
+            <li><strong>Plantaciones forestales</strong></li>
+            <li><strong>Licencias de caza</strong></li>
+            <li><strong>Infractores</strong></li>
+          </ul>
+          <p className="welcome-hint">
+            Solo escribe tu consulta -por ejemplo: <em>"¿Qué títulos habilitantes están vigentes en Loreto?"</em> o <em>"Muéstrame las plantaciones asociadas a titulares con sanciones"</em>- y el sistema generará automáticamente la consulta y mostrará los resultados.
+          </p>
+        </section>
+
         <section className="query-section">
           <h2>Realizar Consulta</h2>
           <QueryForm onSubmit={handleQuerySubmit} isLoading={isLoading} />

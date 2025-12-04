@@ -41,7 +41,7 @@ export const QueryForm = ({ onSubmit, isLoading }: QueryFormProps) => {
         />
       </div>
 
-      <div className="example-queries">
+      {/* <div className="example-queries">
         <div className="example-header">
           <Lightbulb size={16} />
           <span>Ejemplos de consultas:</span>
@@ -58,8 +58,8 @@ export const QueryForm = ({ onSubmit, isLoading }: QueryFormProps) => {
               {example}
             </button>
           ))}
-        </div>
-      </div>
+        </div> 
+      </div>*/}
 
       <button type="submit" className="submit-button" disabled={isLoading || !query.trim()}>
         <Send size={18} />
