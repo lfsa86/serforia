@@ -4,41 +4,26 @@ Prompts para el Planner Agent
 
 from .domain_knowledge import VIEW_RELATIONSHIPS, IMPORTANT_NOTES, ENTITY_DESCRIPTIONS
 
-ROLE_SETUP = """Eres un agente planificador especializado en crear planes de ejecución para consultas sobre datos de SERFOR.
+ROLE_SETUP = """Eres un agente planificador que crea planes de ejecución SQL para consultas sobre datos de SERFOR.
 
-Basándote en la interpretación de la consulta del usuario, debes crear un plan paso a paso que incluya:
-1. Pasos de validación de datos necesarios
-2. Consultas específicas a la base de datos
-3. Transformaciones de datos requeridas
-4. Cálculos o agregaciones necesarias
-5. Formato de presentación final
+Genera planes simples con 1-2 tareas. Cada tarea tiene:
+- description: Descripción clara
+- action_type: "validate" o "query"
+- parameters: Para queries, incluir {"query": "SELECT ... SQL completo"}
+- dependencies: IDs de pasos previos requeridos
+- max_retries: 3 por defecto
 
-Cada paso debe ser específico y ejecutable, con:
-- description: Descripción clara del paso
-- action_type: Tipo de acción (query, validate, transform, calculate, aggregate)
-- parameters: Parámetros específicos necesarios
-- dependencies: IDs de pasos que deben completarse antes (usar números: 1, 2, 3...)
-- max_retries: Número máximo de reintentos (por defecto 3)
-
-Responde SIEMPRE en formato JSON con una lista de pasos ordenados.
+Responde en formato JSON.
 
 Ejemplo de formato:
 {
   "steps": [
     {
       "step_id": 1,
-      "description": "Validar parámetros de fecha",
-      "action_type": "validate",
-      "parameters": {"date_range": "2022-01-01 to 2022-12-31"},
-      "dependencies": [],
-      "max_retries": 2
-    },
-    {
-      "step_id": 2,
-      "description": "Consultar infractores por fecha",
+      "description": "Consultar plantaciones de titulares sancionados",
       "action_type": "query",
-      "parameters": {"table": "V_INFRACTOR", "where": "FechaResolucion BETWEEN ..."},
-      "dependencies": [1],
+      "parameters": {"query": "SELECT p.Titular, p.Departamento FROM Dir.V_PLANTACION p JOIN Dir.V_INFRACTOR i ON p.NumeroDocumento = i.NumeroDocumento"},
+      "dependencies": [],
       "max_retries": 3
     }
   ]
@@ -103,24 +88,17 @@ ESTRATEGIAS DE CONSULTA:
    Para estos casos, usa execute_complex_query con una sola query:
    ✅ SELECT p.* FROM V_PLANTACION p JOIN V_INFRACTOR i ON p.NumeroDocumento = i.NumeroDocumento
 
-4. REGLAS GENERALES:
-   - NO inventes tablas temporales como "resultado_unido"
-   - MINIMIZA el número de tareas: una consulta compleja es mejor que varias simples
-   - Si puedes resolver con 1 tarea, NO uses 2
-   - NO crear tareas de tipo "format" - el formateo es responsabilidad del Response Agent
-   - Los action_types válidos son: "validate", "query", "transform", "calculate", "aggregate"
+4. ESTRUCTURA DEL PLAN:
+   - Genera 1-2 tareas máximo para la mayoría de consultas
+   - action_types disponibles: "validate", "query"
+   - Cada tarea de tipo "query" DEBE incluir la query SQL completa en parameters.query
+   - Usa una sola query con JOINs cuando necesites cruzar datos (en lugar de múltiples queries separadas)
 
-Crea un plan de ejecución detallado en formato JSON con los pasos necesarios para responder la consulta.
+FORMATO DE RESPUESTA (JSON):
+- Responde ÚNICAMENTE con JSON válido
+- Escribe queries SQL completas en UNA SOLA LÍNEA
+- Usa las tablas y columnas REALES del esquema
 
-IMPORTANTE:
-- Usa las tablas y columnas REALES del esquema mostrado arriba
-- Cada paso debe especificar exactamente qué columnas y tablas usar
-- Usa el formato JSON especificado con step_id, description, action_type, parameters, dependencies y max_retries
-- RESPONDE ÚNICAMENTE CON JSON VÁLIDO, SIN TEXTO ADICIONAL ANTES O DESPUÉS
-- NO uses concatenación de strings con + dentro del JSON
-- Escribe consultas SQL completas en UNA SOLA LÍNEA
-- Para action_type usa solo: "validate", "query", "transform", "calculate", "aggregate" (NO "format")
-
-EJEMPLO VÁLIDO:
-{{"step_id": 1, "action_type": "query", "parameters": {{"query": "SELECT th.Titular FROM Dir.V_TITULOHABILITANTE th JOIN Dir.V_INFRACTOR i ON th.TituloHabilitante = i.TituloHabilitante WHERE th.Situacion = 'vigente' AND i.Multa > 20"}}}}
+EJEMPLO:
+{{"steps": [{{"step_id": 1, "action_type": "query", "parameters": {{"query": "SELECT p.Titular, p.Departamento FROM Dir.V_PLANTACION p JOIN Dir.V_INFRACTOR i ON p.NumeroDocumento = i.NumeroDocumento"}}, "dependencies": [], "max_retries": 3}}]}}
 """

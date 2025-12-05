@@ -64,10 +64,9 @@ Parámetros: {parameters}
 
 TASK_PROMPTS = {
     "validate": "Valida los parámetros y datos especificados. Retorna 'VALID' si todo está correcto, o describe los problemas encontrados.",
-    "query": "Ejecuta la consulta especificada. Si necesitas relacionar tablas, usa execute_complex_query con un JOIN completo. NO uses tablas temporales. Retorna los resultados estructurados.",
-    "transform": "Transforma los datos según los parámetros. Retorna los datos transformados.",
-    "calculate": "Realiza los cálculos especificados. Retorna los resultados numéricos.",
-    "aggregate": "Agrega los datos según los parámetros. Retorna el resumen agregado.",
-    "format": "ERROR: Las tareas de tipo 'format' deben ser manejadas por el Response Agent, no el Executor.",
+    "query": """Si los parámetros incluyen "query", ejecuta ESA QUERY EXACTA sin modificarla.
+Usa execute_select_query para queries simples o execute_complex_query si tiene JOINs.
+Solo modifica la query si hay un error y es un reintento.
+IMPORTANTE: En JOINs usar siempre = (igualdad), LIKE es solo para búsquedas en WHERE.""",
     "default": "Ejecuta la operación especificada y retorna el resultado."
 }
