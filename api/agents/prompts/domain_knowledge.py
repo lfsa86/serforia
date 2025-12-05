@@ -73,7 +73,7 @@ V_PLANTACION:
 V_INFRACTOR:
   Registro Nacional de Infractores con sanciones y multas.
   IMPORTANTE: Multas en UIT (usar WHERE Multa > 10 directamente).
-  IMPORTANTE: NO tiene Departamento/Provincia/Distrito - hacer JOIN con V_TITULOHABILITANTE.
+  NOTA: No tiene Departamento/Provincia/Distrito. Si necesitas ubicación, hacer JOIN con V_TITULOHABILITANTE.
 
 V_TITULOHABILITANTE:
   Títulos habilitantes: permisos, concesiones, autorizaciones, cesiones, bosque local.
@@ -89,17 +89,26 @@ V_TITULOHABILITANTE:
 VIEW_RELATIONSHIPS = """
 RELACIONES ENTRE VISTAS (JOINs):
 
+IMPORTANTE: Solo usar JOINs cuando la consulta EXPLÍCITAMENTE requiere cruzar datos.
+Para consultas simples de una sola tabla, NO agregar JOINs.
+
+⚠️ REGLA CRÍTICA - LIKE vs IGUALDAD:
+  - LIKE es para BÚSQUEDAS del usuario: WHERE Titular LIKE '%Juan Pérez%'
+  - IGUALDAD (=) es para JOINs entre vistas: ON a.NumeroDocumento = b.NumeroDocumento
+  - ❌ NUNCA usar LIKE en JOINs: ON a.Col LIKE '%' + b.Col + '%' (causa timeout)
+  - ✅ SIEMPRE usar = en JOINs: ON a.NumeroDocumento = b.NumeroDocumento
+
+COLUMNAS DE RELACIÓN (usar con =):
+  - NumeroDocumento: identificador principal para relacionar titulares entre vistas
+  - TituloHabilitante: código del título habilitante
+
 V_INFRACTOR ↔ V_TITULOHABILITANTE:
-  - JOIN por: TituloHabilitante, NumeroDocumento o Titular
-  - Usar para: obtener ubicación geográfica del infractor
-  - Ejemplo: SELECT i.*, th.Departamento FROM V_INFRACTOR i
-             JOIN V_TITULOHABILITANTE th ON i.TituloHabilitante = th.TituloHabilitante
+  - JOIN por: NumeroDocumento o TituloHabilitante (con =)
+  - Usar SOLO cuando necesitas ubicación geográfica (Departamento, Provincia, Distrito)
+  - Si solo necesitas datos del infractor, consultar V_INFRACTOR directamente SIN JOIN
 
 V_CAMBIO_USO → V_AUTORIZACION_DESBOSQUE:
   - El cambio de uso es PREVIO al desbosque para fines agrícolas
-
-Todas las vistas → V_INFRACTOR:
-  - Incumplir cualquier autorización puede generar infracción
 """
 
 # =============================================================================
@@ -114,9 +123,17 @@ SOBRE MULTAS:
   - Para "multas mayores a 10 UIT" usar: WHERE Multa > 10
   - NO buscar tablas de conversión, el valor ya está en UIT
 
+SOBRE FECHAS (MUY IMPORTANTE):
+  - Los campos de fecha pueden tener datos inconsistentes
+  - NO usar BETWEEN con fechas directamente (puede fallar)
+  - SIEMPRE usar YEAR() para filtrar por año: WHERE YEAR(FechaResolucion) = 2024
+  - Para rango de años: WHERE YEAR(FechaResolucion) BETWEEN 2024 AND 2025
+  - Para mes: WHERE YEAR(FechaResolucion) = 2024 AND MONTH(FechaResolucion) = 6
+
 SOBRE UBICACIÓN GEOGRÁFICA:
-  - V_INFRACTOR NO tiene Departamento, Provincia, Distrito
-  - Para ubicación de infractores: JOIN con V_TITULOHABILITANTE
+  - V_INFRACTOR no tiene Departamento, Provincia, Distrito
+  - Si necesitas ubicación de infractores: JOIN con V_TITULOHABILITANTE
+  - Si NO necesitas ubicación: consultar V_INFRACTOR directamente SIN JOIN
   - Las demás vistas SÍ tienen campos de ubicación
 
 SOBRE DESBOSQUE vs TALA:

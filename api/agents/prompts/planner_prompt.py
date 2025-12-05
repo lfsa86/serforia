@@ -54,13 +54,9 @@ Interpretación: {interpretation}
 {schema_details}
 
 SKILLS DISPONIBLES:
-- execute_select_query: Ejecutar consultas SQL SELECT simples
+- execute_select_query: Ejecutar consultas SQL SELECT (simples, con COUNT, SUM, AVG, etc.)
 - execute_complex_query: Ejecutar consultas complejas con JOINs entre tablas
 - get_table_schemas: Obtener esquemas de tablas
-- search_table_data: Buscar datos con filtros
-- aggregate_table_data: Agregaciones (COUNT, SUM, AVG, MIN, MAX)
-- count_table_rows: Contar filas de tablas
-- get_table_sample: Obtener muestras de datos
 
 IMPORTANTE - BASE DE DATOS SQL SERVER:
 - Para consultas que requieren TOP/LIMIT: usar 'TOP N' (ej: SELECT TOP 1 ...)
@@ -75,36 +71,39 @@ IMPORTANTE - BASE DE DATOS SQL SERVER:
 
 {IMPORTANT_NOTES}
 """ + """
-ESTRATEGIAS DE CONSULTA (PRIORIZAR SIMPLICIDAD):
+ESTRATEGIAS DE CONSULTA:
 
-1. EVALÚA PRIMERO SI PUEDES USAR UNA SOLA VISTA:
-   - Para consultas sobre superficie/departamento: V_TITULOHABILITANTE tiene Departamento, Provincia, Distrito y Superficie
-   - Para consultas sobre dispositivos legales: V_INFRACTOR tiene DispositivoLegal
-   - Para consultas sobre multas: V_INFRACTOR tiene Multa (el valor YA ESTÁ EN UIT, no necesitas convertir)
-   - Para consultas sobre infractores: V_INFRACTOR tiene Infractor y Titular
+1. CASO ESPECIAL - "TODA LA INFO DE UN TITULAR/DNI/TITULO":
+   Cuando piden info general de una persona ("detalle de...", "toda la info de...", "qué tiene..."):
+   - Consultar CADA vista POR SEPARADO con queries simples (SIN JOINs)
+   - El titular puede existir en una vista y no en otra
+
+   ✅ CORRECTO:
+      - Tarea 1: SELECT * FROM Dir.V_INFRACTOR WHERE NumeroDocumento = 'X'
+      - Tarea 2: SELECT * FROM Dir.V_TITULOHABILITANTE WHERE NumeroDocumento = 'X'
+      - Tarea 3: SELECT * FROM Dir.V_PLANTACION WHERE NumeroDocumento = 'X'
+      - etc...
+
+   ❌ INCORRECTO (NO usar JOINs para este caso):
+      - SELECT I.*, T.* FROM V_INFRACTOR I JOIN V_TITULOHABILITANTE T ON ...
+
+2. CONSULTAS ESPECÍFICAS (una sola vista):
+   - Para consultas sobre superficie/departamento: V_TITULOHABILITANTE
+   - Para consultas sobre multas/infracciones: V_INFRACTOR (Multa ya está en UIT)
    - Para consultas sobre licencias de caza: V_LICENCIA_CAZA
    - Para consultas sobre plantaciones: V_PLANTACION
    - Para consultas sobre autorizaciones: V_AUTORIZACION_CTP, V_AUTORIZACION_DEPOSITO, V_AUTORIZACION_DESBOSQUE
    - Para consultas sobre cambios de uso: V_CAMBIO_USO
 
-2. SI NECESITAS RELACIONAR VISTAS (JOINs VÁLIDOS):
-   - Relación: V_INFRACTOR.TituloHabilitante = V_TITULOHABILITANTE.TituloHabilitante
-   - Relación: V_INFRACTOR.Titular = V_TITULOHABILITANTE.Titular
-   - Relación: V_INFRACTOR.NumeroDocumento = V_TITULOHABILITANTE.NumeroDocumento
-   - Relación: V_PLANTACION.NumeroDocumento = V_INFRACTOR.NumeroDocumento
-   - Para JOINs usa execute_complex_query con SQL completo
+3. CONSULTAS QUE RELACIONAN DATOS (usar JOINs):
+   Solo usar JOINs cuando necesitas CRUZAR información entre vistas:
+   - "Infractores que también tienen títulos habilitantes"
+   - "Plantaciones de personas sancionadas"
 
-   ⚠️ CRÍTICO: USA UNA SOLA QUERY CON JOINs EN LUGAR DE MÚLTIPLES QUERIES SEPARADAS
+   Para estos casos, usa execute_complex_query con una sola query:
+   ✅ SELECT p.* FROM V_PLANTACION p JOIN V_INFRACTOR i ON p.NumeroDocumento = i.NumeroDocumento
 
-   ❌ MAL (NO HACER): Crear 2 tareas separadas
-      - Tarea 1: "Consultar titulares sancionados" → SELECT FROM V_INFRACTOR
-      - Tarea 2: "Consultar plantaciones de esos titulares" → SELECT FROM V_PLANTACION
-
-   ✅ BIEN (HACER): Una sola tarea con JOIN
-      - Tarea 1: "Consultar plantaciones de titulares sancionados"
-        → SELECT p.* FROM V_PLANTACION p JOIN V_INFRACTOR i ON p.NumeroDocumento = i.NumeroDocumento
-
-3. REGLAS GENERALES:
+4. REGLAS GENERALES:
    - NO inventes tablas temporales como "resultado_unido"
    - MINIMIZA el número de tareas: una consulta compleja es mejor que varias simples
    - Si puedes resolver con 1 tarea, NO uses 2

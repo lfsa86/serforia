@@ -4,7 +4,8 @@ Executor Agent - Executes database queries and data operations
 from typing import Dict, Any, Optional, List
 from .base_agent import BaseAgent
 from .task_manager import TaskManager, ExecutionTask, TaskStatus
-from .prompts.executor_prompt import ROLE_SETUP, TASK_PROMPT_BASE, RETRY_CONTEXT, TASK_PROMPTS
+from .prompts.executor_prompt import ROLE_SETUP, TASK_PROMPT_BASE, TASK_PROMPTS
+from .utils import format_schema_for_prompt
 from instantneo import SkillManager
 import time
 from utils.logger import get_logger
@@ -24,10 +25,6 @@ class ExecutorAgent(BaseAgent):
             execute_select_query,
             execute_complex_query,
             get_table_schemas,
-            get_table_sample,
-            count_table_rows,
-            search_table_data,
-            aggregate_table_data,
             test_database_connection,
             refresh_database_schema
         )
@@ -35,10 +32,6 @@ class ExecutorAgent(BaseAgent):
         skills.register_skill(execute_select_query)
         skills.register_skill(execute_complex_query)
         skills.register_skill(get_table_schemas)
-        skills.register_skill(get_table_sample)
-        skills.register_skill(count_table_rows)
-        skills.register_skill(search_table_data)
-        skills.register_skill(aggregate_table_data)
         skills.register_skill(test_database_connection)
         skills.register_skill(refresh_database_schema)
 
@@ -61,6 +54,10 @@ class ExecutorAgent(BaseAgent):
         """
         task_manager: TaskManager = input_data.get("task_manager")
         user_query = input_data.get("user_query", "")
+        schema_info = input_data.get("schema_info", {})
+
+        # Store formatted schema for use in task prompts
+        self.schema_details = format_schema_for_prompt(schema_info)
 
         if not task_manager:
             return {
@@ -190,19 +187,25 @@ class ExecutorAgent(BaseAgent):
         return any(indicator in response for indicator in error_indicators)
 
     def generate_task_prompt(self, task: ExecutionTask) -> str:
-        """Generate appropriate prompt for task execution with retry context"""
+        """Generate appropriate prompt for task execution with schema context"""
+        # Include schema in prompt
+        schema_context = getattr(self, 'schema_details', '')
+
         base_prompt = TASK_PROMPT_BASE.format(
             description=task.description,
             action_type=task.action_type,
-            parameters=task.parameters
+            parameters=task.parameters,
+            schema_details=schema_context
         )
 
         # Add retry context if this is not the first attempt
         if task.retry_count > 0:
-            base_prompt += RETRY_CONTEXT.format(
-                retry_number=task.retry_count + 1,
-                error_message=task.error_message
-            )
+            base_prompt += f"""
+⚠️ INTENTO #{task.retry_count + 1} - ERROR ANTERIOR:
+{task.error_message}
+
+Usa SOLO las columnas que existen en el schema de arriba.
+"""
 
         # Get action-specific prompt or default
         action_suffix = TASK_PROMPTS.get(task.action_type, TASK_PROMPTS["default"])

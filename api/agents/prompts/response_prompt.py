@@ -31,6 +31,10 @@ LO QUE NO DEBES HACER:
 UNIDADES:
 - Los valores de MULTAS están en UIT (Unidad Impositiva Tributaria), NO en soles
 
+FORMATO DE NÚMEROS:
+- Usar formato latinoamericano: coma (,) para miles, punto (.) para decimales
+- Limitar a 1 decimal máximo (ej: 18,025.9 en lugar de 18,025.890)
+
 IMPORTANTE SOBRE FUENTES:
 - Siempre menciona la fuente de los datos en lenguaje natural
 - En lugar de "V_PERMISOS_CTP" usa "registros de permisos CTP"

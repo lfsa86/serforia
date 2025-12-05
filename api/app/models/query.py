@@ -11,13 +11,22 @@ class QueryRequest(BaseModel):
     include_workflow: bool = Field(default=False, description="Include workflow details in response")
 
 
+class QueryResultSet(BaseModel):
+    """Individual query result set"""
+    description: str
+    data: List[Dict[str, Any]]
+    row_count: int
+    is_primary: bool = False
+
+
 class QueryResponse(BaseModel):
     """Response model for query results"""
     success: bool
     executive_response: str = ""
     final_response: str = ""
     agents_used: List[str] = []
-    data: Optional[List[Dict[str, Any]]] = None
+    data: Optional[List[Dict[str, Any]]] = None  # Primary result (last query)
+    query_results: Optional[List[QueryResultSet]] = None  # All query results
     visualization_data: Optional[List[Dict[str, Any]]] = None
     sql_queries: Optional[List[Dict[str, Any]]] = None
     error: Optional[str] = None

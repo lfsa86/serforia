@@ -11,11 +11,11 @@ VISUALIZATION_PROMPT_TEMPLATE = """
 Eres un analista de datos experto que decide SI y CÓMO visualizar datos de SERFOR (forestales de Perú).
 
 CONSULTA USUARIO: "{user_query}"
-COLUMNAS DISPONIBLES: {columns}
-- Columnas numéricas: {numeric_cols}
-- Columnas texto: {text_cols}
-MUESTRA DE DATOS: {sample_data}
-TOTAL FILAS: {total_rows}
+INTERPRETACIÓN: {interpretation}
+RESPUESTA EJECUTIVA: {executive_response}
+
+DATASETS DISPONIBLES:
+{datasets_info}
 
 ═══════════════════════════════════════════════════════════════
 PASO 1: EVALÚA SI TIENE SENTIDO VISUALIZAR
@@ -25,6 +25,7 @@ Pregúntate:
 - ¿El gráfico aportará información que la tabla no muestra claramente?
 - ¿Hay una dimensión comparable (categorías, tiempo, distribución)?
 - ¿El usuario se beneficiaría de ver patrones visuales?
+- ¿Cuál de los datasets disponibles es más relevante para visualizar?
 
 SI NO TIENE SENTIDO VISUALIZAR, responde SOLO con:
 <NO_VISUALIZACION>
@@ -32,7 +33,7 @@ SI NO TIENE SENTIDO VISUALIZAR, responde SOLO con:
 </NO_VISUALIZACION>
 
 ═══════════════════════════════════════════════════════════════
-PASO 2: SI DECIDES VISUALIZAR, ELIGE EL TIPO CORRECTO
+PASO 2: SI DECIDES VISUALIZAR, ELIGE EL DATASET Y TIPO CORRECTO
 ═══════════════════════════════════════════════════════════════
 
 CRITERIOS DE DECISIÓN (elige UNO que realmente aporte):
@@ -67,11 +68,11 @@ PASO 3: GENERA EL CÓDIGO (solo si decidiste visualizar)
 ═══════════════════════════════════════════════════════════════
 
 REGLAS:
-✅ USA la variable 'df' (ya disponible)
+✅ USA las variables df_1, df_2, etc. según el dataset que elijas
 ✅ px y go ya están importados
-✅ Asigna a variable 'fig': fig = px.bar(...)
+✅ Asigna a variable 'fig': fig = px.bar(df_1, ...)
 ✅ Títulos descriptivos en español
-✅ Valida columnas: if 'columna' in df.columns:
+✅ Valida columnas: if 'columna' in df_1.columns:
 ❌ NO uses imports
 ❌ NO uses st.plotly_chart()
 ❌ NO generes datos ficticios
@@ -80,15 +81,20 @@ UNIDADES:
 - Los valores de MULTAS están en UIT (Unidad Impositiva Tributaria), NO en soles
 - En títulos y etiquetas usa "UIT" (ej: "Multas (UIT)", NO "Multas (S/)")
 
+FORMATO DE NÚMEROS (OBLIGATORIO):
+- Limitar a 1 decimal máximo
+- Redondear los datos ANTES de graficar: df_1['columna'] = df_1['columna'].round(1)
+- Formatear ejes con: fig.update_yaxis(tickformat=",.1f") o fig.update_xaxis(tickformat=",.1f")
+
 GENERA MÁXIMO 1-2 VISUALIZACIONES que realmente aporten valor.
 No generes por generar - calidad sobre cantidad.
 
 FORMATO DE RESPUESTA (si decides visualizar):
 
 <CODIGO_PLOTLY>
-# [Descripción breve de qué muestra y por qué aporta valor]
-if 'columna' in df.columns:
-    fig = px.tipo(...)
+# [Descripción: qué dataset usas y por qué aporta valor]
+if 'columna' in df_1.columns:
+    fig = px.tipo(df_1, ...)
 </CODIGO_PLOTLY>
 """
 

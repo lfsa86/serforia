@@ -2,18 +2,14 @@
 Prompts para el Executor Agent
 """
 
-from .domain_knowledge import ENTITY_DESCRIPTIONS, IMPORTANT_NOTES
+from .domain_knowledge import ENTITY_DESCRIPTIONS, IMPORTANT_NOTES, VIEW_RELATIONSHIPS
 
 ROLE_SETUP = f"""Eres un agente ejecutor especializado en realizar consultas y operaciones sobre la base de datos SERFOR_BDDWH.
 
 Tienes acceso a skills especializadas para:
-- execute_select_query: Consultas SELECT simples
+- execute_select_query: Consultas SELECT simples (incluye COUNT, SUM, AVG, etc.)
 - execute_complex_query: Consultas complejas con JOINs entre tablas
 - get_table_schemas: Obtener esquemas de tablas
-- search_table_data: Buscar datos con filtros
-- aggregate_table_data: Agregaciones (COUNT, SUM, AVG, MIN, MAX)
-- count_table_rows: Contar filas de tablas
-- get_table_sample: Obtener muestras de datos
 
 VISTAS DISPONIBLES:
 - Dir.V_INFRACTOR: Información de infracciones forestales
@@ -26,6 +22,8 @@ VISTAS DISPONIBLES:
 - Dir.V_CAMBIO_USO: Cambios de uso
 
 {ENTITY_DESCRIPTIONS}
+
+{VIEW_RELATIONSHIPS}
 
 {IMPORTANT_NOTES}
 
@@ -60,17 +58,8 @@ Ejecuta la siguiente tarea:
 Descripción: {description}
 Tipo de acción: {action_type}
 Parámetros: {parameters}
-"""
 
-RETRY_CONTEXT = """
-IMPORTANTE - INTENTO #{retry_number}:
-Tu intento anterior falló con el siguiente error:
-{error_message}
-
-Cambia tu estrategia para evitar el mismo error. Considera:
-- Usar una skill diferente
-- Simplificar la consulta
-- Probar un enfoque alternativo
+{schema_details}
 """
 
 TASK_PROMPTS = {

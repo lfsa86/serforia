@@ -4,6 +4,7 @@ Interpreter Agent - Analyzes user requests and extracts intent
 from typing import Dict, Any
 from .base_agent import BaseAgent
 from .prompts.interpreter_prompt import ROLE_SETUP, INTERPRETATION_PROMPT_TEMPLATE
+from .utils import format_schema_for_prompt
 
 class InterpreterAgent(BaseAgent):
     """Agent that interprets user requests and extracts structured information"""
@@ -28,24 +29,12 @@ class InterpreterAgent(BaseAgent):
         user_query = input_data.get("user_query", "")
         schema_info = input_data.get("schema_info", {})
 
-        # Format complete schema information for the prompt
-        tables_summary = ""
-        if schema_info and "tables" in schema_info:
-            tables_summary = "\nEsquema completo de base de datos:\n"
-            for table_name, table_data in schema_info["tables"].items():
-                tables_summary += f"\n📋 Tabla: {table_data.get('full_name', table_name)}\n"
-                tables_summary += f"   Descripción: {table_data.get('description', 'Sin descripción')}\n"
-                tables_summary += f"   Filas estimadas: {table_data.get('estimated_rows', 'Desconocido')}\n"
-                tables_summary += f"   Columnas (TODAS):\n"
-
-                # Include ALL columns with descriptions
-                for col in table_data.get("columns", []):
-                    col_desc = col.get('description', 'Sin descripción')
-                    tables_summary += f"     - {col['name']} ({col['type']}): {col_desc}\n"
+        # Format schema using shared utility
+        schema_details = format_schema_for_prompt(schema_info)
 
         prompt = INTERPRETATION_PROMPT_TEMPLATE.format(
             user_query=user_query,
-            schema_info=tables_summary
+            schema_info=schema_details
         )
 
         response = self.run(prompt)

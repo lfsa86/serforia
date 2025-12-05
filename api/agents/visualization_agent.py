@@ -28,20 +28,43 @@ class VisualizationAgent(BaseAgent):
     def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate Plotly visualizations from query results and export as JSON
+        Receives all datasets with context, agent decides which to visualize
         """
         try:
-            query_results = input_data.get("query_results", [])
+            structured_results = input_data.get("structured_results", [])
             user_query = input_data.get("user_query", "")
+            interpretation = input_data.get("interpretation", "")
+            executive_response = input_data.get("executive_response", "")
 
-            if not query_results or len(query_results) == 0:
+            # Fallback for legacy format
+            if not structured_results:
+                legacy_data = input_data.get("query_results", [])
+                if legacy_data:
+                    structured_results = [{
+                        "description": "Query results",
+                        "data": legacy_data,
+                        "row_count": len(legacy_data),
+                        "columns": list(legacy_data[0].keys()) if legacy_data else [],
+                        "is_primary": True
+                    }]
+
+            if not structured_results:
                 return {"has_visualizations": False}
 
-            # Convert to DataFrame
-            df = pd.DataFrame(query_results)
+            # Create dataframes dict for all datasets (df_1, df_2, etc.)
+            dataframes = {}
+            for i, result in enumerate(structured_results):
+                df_name = f"df_{i+1}"
+                dataframes[df_name] = pd.DataFrame(result["data"])
 
-            # Generate visualization code
-            logging.info(f"Generating visualizations for {len(df)} rows, {len(df.columns)} columns")
-            prompt = self._build_visualization_prompt(df, user_query)
+            # Generate visualization code - agent decides which dataset(s) to use
+            logging.info(f"Generating visualizations - {len(structured_results)} datasets available")
+            prompt = self._build_visualization_prompt(
+                datasets=structured_results,
+                user_query=user_query,
+                interpretation=interpretation,
+                executive_response=executive_response
+            )
             response = self.run(prompt)
 
             print(f"📊 DEBUG VisualizationAgent response preview: {response[:200]}...")
@@ -61,8 +84,8 @@ class VisualizationAgent(BaseAgent):
                 logging.warning("No visualization code blocks found in agent response")
                 return {"has_visualizations": False}
 
-            # Execute code and capture figures
-            viz_data = self._execute_and_capture_figures(code_blocks, df)
+            # Execute code and capture figures - pass all dataframes
+            viz_data = self._execute_and_capture_figures(code_blocks, dataframes)
 
             print(f"📊 VisualizationAgent generó {len(viz_data)} visualización(es)")
 
@@ -78,9 +101,10 @@ class VisualizationAgent(BaseAgent):
             traceback.print_exc()
             return {"has_visualizations": False, "error": str(e)}
 
-    def _execute_and_capture_figures(self, code_blocks: List[str], df: pd.DataFrame) -> List[Dict[str, Any]]:
+    def _execute_and_capture_figures(self, code_blocks: List[str], dataframes: Dict[str, pd.DataFrame]) -> List[Dict[str, Any]]:
         """
         Execute visualization code blocks and capture Plotly figures as JSON
+        Now receives dict of dataframes: {'df_1': DataFrame, 'df_2': DataFrame, ...}
         """
         viz_data = []
 
@@ -94,14 +118,15 @@ class VisualizationAgent(BaseAgent):
                     logging.warning(f"Code block {i+1} failed safety validation")
                     continue
 
-                # Create execution namespace
+                # Create execution namespace with all dataframes
                 namespace = {
-                    'df': df,
                     'pd': pd,
                     'px': px,
                     'go': go,
                     'figures': []  # List to collect figures
                 }
+                # Add all dataframes to namespace (df_1, df_2, etc.)
+                namespace.update(dataframes)
 
                 # Wrap code to capture figures
                 wrapped_code = self._wrap_code_to_capture_figures(code)
@@ -163,21 +188,37 @@ if 'fig' in locals():
             "message": f"Generated {len(viz_data)} visualizations"
         }
 
-    def _build_visualization_prompt(self, df: pd.DataFrame, user_query: str) -> str:
-        """Build prompt to generate Plotly visualization code"""
-        sample_data = df.head(3).to_dict('records') if len(df) > 0 else []
+    def _build_visualization_prompt(
+        self,
+        datasets: List[Dict],
+        user_query: str,
+        interpretation: str = "",
+        executive_response: str = ""
+    ) -> str:
+        """Build prompt with all datasets - agent decides which to visualize"""
 
-        # Analyze column types for better context
-        numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
-        text_cols = df.select_dtypes(include=['object']).columns.tolist()
+        # Build detailed info for each dataset
+        datasets_info = []
+        for i, dataset in enumerate(datasets):
+            df = pd.DataFrame(dataset["data"])
+            numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+            text_cols = df.select_dtypes(include=['object']).columns.tolist()
+            sample = df.head(3).to_dict('records') if len(df) > 0 else []
+
+            primary_marker = " [RESULTADO PRINCIPAL]" if dataset.get("is_primary") else ""
+            datasets_info.append(
+                f"df_{i+1}{primary_marker}: {dataset['description']}\n"
+                f"   - Filas: {dataset['row_count']}\n"
+                f"   - Columnas numéricas: {numeric_cols}\n"
+                f"   - Columnas texto: {text_cols}\n"
+                f"   - Muestra: {sample}"
+            )
 
         return VISUALIZATION_PROMPT_TEMPLATE.format(
             user_query=user_query,
-            columns=list(df.columns),
-            numeric_cols=numeric_cols,
-            text_cols=text_cols,
-            sample_data=sample_data,
-            total_rows=len(df)
+            interpretation=interpretation or "No disponible",
+            executive_response=executive_response or "No disponible",
+            datasets_info="\n\n".join(datasets_info)
         )
 
     def _extract_response_blocks(self, response: str, block_type: str) -> List[str]:

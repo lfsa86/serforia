@@ -34,7 +34,6 @@ from .planner_prompt import (
 from .executor_prompt import (
     ROLE_SETUP as EXECUTOR_ROLE_SETUP,
     TASK_PROMPT_BASE,
-    RETRY_CONTEXT,
     TASK_PROMPTS
 )
 

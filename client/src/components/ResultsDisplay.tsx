@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { QueryResponse } from '../types';
+import type { QueryResponse, QueryResultSet } from '../types';
 import { DataTable } from './DataTable';
 import { SQLQueriesDisplay } from './SQLQueriesDisplay';
 import { VisualizationDisplay } from './VisualizationDisplay';
@@ -13,16 +13,42 @@ interface ResultsDisplayProps {
 
 export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   const [isDataExpanded, setIsDataExpanded] = useState(false);
+  const [isIntermediateExpanded, setIsIntermediateExpanded] = useState(false);
+  const [expandedIntermediates, setExpandedIntermediates] = useState<Set<number>>(new Set());
 
   if (!results) return null;
 
-  const downloadCSV = () => {
-    if (!results.data || results.data.length === 0) return;
+  const toggleIntermediateResult = (index: number) => {
+    setExpandedIntermediates(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
 
-    const headers = Object.keys(results.data[0]);
+  // Get primary result (last query) and intermediate results
+  // Fallback to results.data for backward compatibility
+  const primaryResult = results.query_results?.find(r => r.is_primary) ||
+    (results.data && results.data.length > 0 ? {
+      description: "Datos Encontrados",
+      data: results.data,
+      row_count: results.data.length,
+      is_primary: true
+    } : null);
+  const intermediateResults = results.query_results?.filter(r => !r.is_primary) || [];
+  const hasIntermediateResults = intermediateResults.length > 0;
+
+  const downloadCSV = (data: Record<string, any>[], filename?: string) => {
+    if (!data || data.length === 0) return;
+
+    const headers = Object.keys(data[0]);
     const csvContent = [
       headers.join(','),
-      ...results.data.map(row =>
+      ...data.map(row =>
         headers.map(header => {
           const value = row[header];
           return typeof value === 'string' && value.includes(',')
@@ -36,7 +62,7 @@ export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `consulta_serfor_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = filename || `consulta_serfor_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -84,17 +110,17 @@ export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
             <SQLQueriesDisplay queries={results.sql_queries} />
           )}
 
-          {/* 3. Data Table (collapsible, closed by default) */}
-          {results.data && results.data.length > 0 && (
+          {/* 3. Data Section - All Results */}
+          {primaryResult && primaryResult.data.length > 0 && (
             <div className="data-section-collapsible">
               <button
                 className="expand-button"
                 onClick={() => setIsDataExpanded(!isDataExpanded)}
               >
-                <span>📊 Ver Datos Encontrados ({results.data.length} registros, {Object.keys(results.data[0]).length} columnas)</span>
+                <span>📊 Ver Datos Encontrados ({primaryResult.row_count} registros, {Object.keys(primaryResult.data[0]).length} columnas)</span>
                 <div className="expand-button-actions">
                   <button
-                    onClick={(e) => { e.stopPropagation(); downloadCSV(); }}
+                    onClick={(e) => { e.stopPropagation(); downloadCSV(primaryResult.data); }}
                     className="download-btn-inline"
                     title="Descargar CSV"
                   >
@@ -107,7 +133,52 @@ export const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
 
               {isDataExpanded && (
                 <div className="data-content">
-                  <DataTable data={results.data} />
+                  {/* Primary Result Title & Table */}
+                  <h4 className="primary-result-title">{primaryResult.description}</h4>
+                  <DataTable data={primaryResult.data} />
+
+                  {/* Intermediate Results (inside the same section) */}
+                  {hasIntermediateResults && (
+                    <div className="intermediate-results-section">
+                      <button
+                        className="expand-button secondary"
+                        onClick={() => setIsIntermediateExpanded(!isIntermediateExpanded)}
+                      >
+                        <span>📋 Ver consultas intermedias ({intermediateResults.length})</span>
+                        {isIntermediateExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </button>
+
+                      {isIntermediateExpanded && (
+                        <div className="intermediate-content">
+                          {intermediateResults.map((result, index) => (
+                            <div key={index} className="intermediate-result-item">
+                              <button
+                                className="intermediate-result-header"
+                                onClick={() => toggleIntermediateResult(index)}
+                              >
+                                <span>{result.description} ({result.row_count} registros, {Object.keys(result.data[0] || {}).length} columnas)</span>
+                                <div className="intermediate-result-actions">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); downloadCSV(result.data, `consulta_${index + 1}_${new Date().toISOString().split('T')[0]}.csv`); }}
+                                    className="download-btn-inline small"
+                                    title="Descargar CSV"
+                                  >
+                                    <Download size={14} />
+                                  </button>
+                                  {expandedIntermediates.has(index) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                </div>
+                              </button>
+                              {expandedIntermediates.has(index) && (
+                                <div className="intermediate-result-data">
+                                  <DataTable data={result.data} />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -67,7 +67,8 @@ class OrchestratorService:
 
             table_data = self._extract_table_data(execution_results)
             if table_data:
-                response_data["data"] = table_data
+                response_data["data"] = table_data["primary_data"]
+                response_data["query_results"] = table_data["query_results"]
 
             # Extract SQL queries
             sql_queries = self._extract_sql_queries(execution_results)
@@ -105,33 +106,46 @@ class OrchestratorService:
                 "agents_used": []
             }
 
-    def _extract_table_data(self, execution_results: List[Dict]) -> List[Dict]:
-        """Extract table data from execution results - combines ALL successful query results"""
-        all_data = []
-        all_columns = set()
+    def _extract_table_data(self, execution_results: List[Dict]) -> Dict[str, Any]:
+        """
+        Extract table data from execution results.
+        Returns primary data (last query) and all query results separately.
+        """
+        query_results = []
 
         for i, result in enumerate(execution_results):
             if result.get("status") == "success" and isinstance(result.get("result"), str):
                 try:
                     parsed_result = json.loads(result["result"])
                     task_desc = result.get("description", result.get("task_description", f"Query {i+1}"))
-                    print(f"🔍 DEBUG - Parsed result for '{task_desc}': {len(parsed_result.get('data', []))} rows")
 
                     if parsed_result.get("success") and "data" in parsed_result:
                         data = parsed_result["data"]
                         if isinstance(data, list) and len(data) > 0:
-                            # Track columns from this result
-                            result_columns = set(data[0].keys())
-                            all_columns.update(result_columns)
-                            all_data.extend(data)
-                            print(f"📊 DEBUG - Added {len(data)} rows from '{task_desc}' (total: {len(all_data)})")
+                            query_results.append({
+                                "description": task_desc,
+                                "data": data,
+                                "row_count": len(data),
+                                "is_primary": False
+                            })
+                            print(f"📊 DEBUG - Query '{task_desc}': {len(data)} rows")
                 except Exception as e:
                     print(f"❌ DEBUG - Error parsing result: {e}")
                     continue
 
-        if all_data:
-            print(f"📊 DEBUG - Total combined data: {len(all_data)} rows, {len(all_columns)} unique columns")
-        return all_data if all_data else None
+        if not query_results:
+            return None
+
+        # Mark last query as primary
+        query_results[-1]["is_primary"] = True
+        primary_data = query_results[-1]["data"]
+
+        print(f"📊 DEBUG - {len(query_results)} queries extracted, primary has {len(primary_data)} rows")
+
+        return {
+            "primary_data": primary_data,
+            "query_results": query_results
+        }
 
     def _extract_sql_queries(self, execution_results: List[Dict]) -> List[Dict]:
         """Extract SQL queries from execution results"""

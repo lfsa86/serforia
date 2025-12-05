@@ -149,34 +149,49 @@ class AgentOrchestrator:
             workflow_data.update(response_result)
 
             # Step 5: Generate visualizations if applicable
-            # Try to extract tables from the response - combine ALL results
+            # Extract query results WITH metadata (separated, not combined)
             execution_results = workflow_data.get("execution_results", [])
 
-            # Collect ALL successful query results
-            query_results = []
-            for result in execution_results:
+            structured_results = []
+            for i, result in enumerate(execution_results):
                 if result.get("status") == "success" and isinstance(result.get("result"), str):
                     try:
-                        # Try to parse JSON result from skills
                         parsed_result = json.loads(result["result"])
                         if parsed_result.get("success") and "data" in parsed_result:
                             data = parsed_result["data"]
                             if isinstance(data, list) and len(data) > 0:
-                                query_results.extend(data)
-                                print(f"   📊 Agregando {len(data)} filas al dataset de visualización")
+                                structured_results.append({
+                                    "description": result.get("description", result.get("task_description", f"Query {i+1}")),
+                                    "data": data,
+                                    "row_count": len(data),
+                                    "columns": list(data[0].keys()) if data else [],
+                                    "is_primary": False
+                                })
+                                print(f"   📊 Dataset {i+1}: '{structured_results[-1]['description']}' - {len(data)} filas")
                     except:
                         continue
 
-            print(f"   📊 Total datos para visualización: {len(query_results)} filas") if query_results else None
+            # Mark the last result as primary (final query answer)
+            if structured_results:
+                structured_results[-1]["is_primary"] = True
+                print(f"   📊 Dataset primario: '{structured_results[-1]['description']}'")
 
-            # Evaluate if visualization makes sense before calling the agent
-            should_visualize = self._should_generate_visualization(query_results, user_query)
+            # Evaluate if visualization makes sense (use primary dataset for heuristics)
+            primary_data = structured_results[-1]["data"] if structured_results else []
+            should_visualize = self._should_generate_visualization(primary_data, user_query)
 
             if should_visualize:
                 print("📊 Generando visualizaciones...")
-                self.logger.log_agent_activity("orchestrator", "starting_visualization_generation", {"query_results": query_results, "user_query": user_query})
-                visualization_result = self.visualization_agent.process({"query_results": query_results, "user_query": user_query})
-                self.logger.log_agent_activity("visualization", "process_completed", {"query_results": query_results, "user_query": user_query}, visualization_result)
+                # Pass full context to visualization agent
+                viz_input = {
+                    "structured_results": structured_results,
+                    "user_query": user_query,
+                    "interpretation": workflow_data.get("interpretation", ""),
+                    "executive_response": response_result.get("executive_response", "")
+                }
+                self.logger.log_agent_activity("orchestrator", "starting_visualization_generation", {"num_datasets": len(structured_results), "user_query": user_query})
+                visualization_result = self.visualization_agent.process(viz_input)
+                self.logger.log_agent_activity("visualization", "process_completed", {"num_datasets": len(structured_results)}, visualization_result)
                 workflow_data.update(visualization_result)
             else:
                 print("📊 Visualización omitida (no aporta valor según heurísticas)")

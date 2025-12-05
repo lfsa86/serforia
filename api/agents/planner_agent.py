@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 from .base_agent import BaseAgent
 from .task_manager import TaskManager, ExecutionTask
 from .prompts.planner_prompt import ROLE_SETUP, PLANNING_PROMPT_TEMPLATE
+from .utils import format_schema_for_prompt
 from utils.logger import get_logger
 import json
 
@@ -35,21 +36,8 @@ class PlannerAgent(BaseAgent):
         user_query = input_data.get("user_query", "")
         schema_info = input_data.get("schema_info", {})
 
-        # Format complete schema for planning
-        schema_details = ""
-        if schema_info and "tables" in schema_info:
-            schema_details = "\n🗄️ ESQUEMA COMPLETO DE BASE DE DATOS:\n"
-            for table_name, table_data in schema_info["tables"].items():
-                schema_details += f"\n📋 Tabla: {table_data.get('full_name', table_name)}\n"
-                schema_details += f"   Descripción: {table_data.get('description', 'Sin descripción')}\n"
-                schema_details += f"   Filas estimadas: {table_data.get('estimated_rows', 'Desconocido')}\n"
-                schema_details += f"   TODAS LAS COLUMNAS:\n"
-
-                # Include ALL columns with full details
-                for col in table_data.get('columns', []):
-                    col_desc = col.get('description', 'Sin descripción')
-                    nullable = "NULL" if col.get('nullable', True) else "NOT NULL"
-                    schema_details += f"     - {col['name']} ({col['type']}, {nullable}): {col_desc}\n"
+        # Format schema using shared utility
+        schema_details = format_schema_for_prompt(schema_info)
 
         prompt = PLANNING_PROMPT_TEMPLATE.format(
             user_query=user_query,
