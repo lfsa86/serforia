@@ -1,19 +1,20 @@
 """
 Query routes for the API
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
 import pyodbc
 
-from ..models import QueryRequest, QueryResponse, HealthResponse
+from ..models import QueryRequest, QueryResponse, HealthResponse, UserInfo
 from ..services import get_orchestrator_service
 from ..core import settings
+from ..dependencies import get_current_user
 
 router = APIRouter()
 
 
 @router.post("/query", response_model=QueryResponse)
-async def process_query(request: QueryRequest):
+async def process_query(request: QueryRequest, current_user: UserInfo = Depends(get_current_user)):
     """
     Process a natural language query about forestry data
 

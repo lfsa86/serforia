@@ -28,6 +28,17 @@ class Settings(BaseSettings):
     # CORS Settings
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
+    # SGI Seguridad Settings
+    SGI_BASE_URL: str = "https://qa.serfor.gob.pe/sgiseguridad"
+    SGI_SISTEMA_ID: int = 41
+    SGI_COMPAGNIA_ID: int = 1
+
+    # Auth Dev Mode (bypass para desarrollo)
+    AUTH_DEV_MODE: bool = False
+    AUTH_DEV_USER: str = "dev_user"
+    AUTH_DEV_PASSWORD: str = "dev123"
+    AUTH_FALLBACK_ON_ERROR: bool = False
+
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins into a list"""

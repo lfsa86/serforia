@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { QueryResponse, QueryResultSet } from '../types';
+import type { QueryResponse } from '../types';
 import { DataTable } from './DataTable';
 import { SQLQueriesDisplay } from './SQLQueriesDisplay';
 import { VisualizationDisplay } from './VisualizationDisplay';

@@ -1,17 +1,10 @@
 import { useState } from 'react';
-import { Send, Lightbulb } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 interface QueryFormProps {
   onSubmit: (query: string) => void;
   isLoading: boolean;
 }
-
-const EXAMPLE_QUERIES = [
-  "¿Cuántos titulares forestales hay en total?",
-  "Suma las multas registradas por departamento del titular del título habilitante",
-  "Me gustaría identificar los titulares que actualmente poseen títulos habilitantes vigentes, y que además tienen infracciónes sancionadas con multas mayores a 20 UIT",
-  "¿Puedes hacer un resumen de las superficies de titulo habitante según departamento?",
-];
 
 export const QueryForm = ({ onSubmit, isLoading }: QueryFormProps) => {
   const [query, setQuery] = useState('');
@@ -21,10 +14,6 @@ export const QueryForm = ({ onSubmit, isLoading }: QueryFormProps) => {
     if (query.trim()) {
       onSubmit(query);
     }
-  };
-
-  const handleExampleClick = (exampleQuery: string) => {
-    setQuery(exampleQuery);
   };
 
   return (

@@ -26,6 +26,13 @@
   color: white;
   padding: 1.5rem 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.header-content {
   text-align: center;
 }
 
@@ -44,6 +51,73 @@
   font-size: 1rem;
   color: white;
   font-weight: 400;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.user-info span {
+  font-size: 0.9rem;
+  color: white;
+}
+
+.logout-button {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 1rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .header-content h1 {
+    font-size: 1.4rem;
+  }
+
+  .header-content p {
+    font-size: 0.85rem;
+  }
+
+  .user-info {
+    position: absolute;
+    right: 1rem;
+    left: 1rem;
+    top: auto;
+    bottom: 0.75rem;
+    transform: none;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .user-info span {
+    font-size: 0.8rem;
+  }
+
+  .logout-button {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
 }
 
 /* Welcome Section */

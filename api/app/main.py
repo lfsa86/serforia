@@ -1,15 +1,23 @@
 """
 Main FastAPI application
 """
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from .core import settings
-from .routes import query_router
+from .routes import query_router, auth_router
 
 # Load environment variables
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 # Create FastAPI app
 app = FastAPI(
@@ -28,6 +36,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(query_router, prefix="/api", tags=["queries"])
 
 
@@ -44,12 +53,16 @@ async def root():
 @app.on_event("startup")
 async def startup_event():
     """Startup event handler"""
-    print("🚀 SERFOR API starting up...")
-    print(f"📊 Database: {settings.DB_SERVER}")
-    print(f"🌐 CORS Origins: {settings.cors_origins_list}")
+    logger = logging.getLogger(__name__)
+    logger.info("SERFOR API starting up...")
+    logger.info(f"Database: {settings.DB_SERVER}")
+    logger.info(f"CORS Origins: {settings.cors_origins_list}")
+    logger.info(f"Auth Mode: {'DEV (bypass)' if settings.AUTH_DEV_MODE else 'SGI Seguridad'}")
+    logger.info(f"SGI URL: {settings.SGI_BASE_URL}")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Shutdown event handler"""
-    print("👋 SERFOR API shutting down...")
+    logger = logging.getLogger(__name__)
+    logger.info("SERFOR API shutting down...")
