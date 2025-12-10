@@ -137,7 +137,27 @@ class AuthService:
             response = await client.post(url, json=payload)
 
             if response.status_code == 200:
-                data = response.json()
+                # SGI devuelve 200 con body vacío cuando las credenciales son inválidas
+                response_text = response.text.strip()
+                if not response_text:
+                    logger.warning(
+                        f"SGI login empty response | usuario={usuario} | ip={client_ip}"
+                    )
+                    return LoginResponse(
+                        success=False,
+                        error="Credenciales inválidas"
+                    )
+
+                try:
+                    data = response.json()
+                except Exception:
+                    logger.warning(
+                        f"SGI login invalid JSON | usuario={usuario} | ip={client_ip}"
+                    )
+                    return LoginResponse(
+                        success=False,
+                        error="Credenciales inválidas"
+                    )
 
                 # Extract user info
                 user_data = data.get("usuario", {})
