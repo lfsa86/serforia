@@ -53,6 +53,10 @@ async def process_query(
                 elif isinstance(sq, str):
                     sql_queries.append(sq)
 
+        # Check if query was rejected by guardrails
+        is_rejected = result.get("rejected", False)
+        rejection_reason = result.get("reason") if is_rejected else None
+
         # Log to WAZUH
         wazuh.log_query(
             user_id=current_user.id,
@@ -62,7 +66,9 @@ async def process_query(
             sql_queries=sql_queries if sql_queries else None,
             http_status=200,
             success=result.get("success", True),
-            response_time_ms=response_time_ms
+            response_time_ms=response_time_ms,
+            rejected=is_rejected,
+            rejection_reason=rejection_reason
         )
 
         return QueryResponse(**result)

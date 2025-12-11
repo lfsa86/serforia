@@ -104,12 +104,47 @@ class AgentOrchestrator:
         }
 
         try:
-            # Step 1: Interpret the user query
-            print("🔍 Interpretando consulta...")
+            # Step 1: Interpret and validate the user query
+            print("🔍 Interpretando y validando consulta...")
             self.logger.log_agent_activity("orchestrator", "starting_interpretation", workflow_data)
             interpretation_result = self.interpreter.process(workflow_data)
-            self.logger.log_agent_activity("interpreter", "process_completed", workflow_data, interpretation_result)
+
+            # Log validation result (valid or rejected)
+            is_valid = interpretation_result.get("valid", True)
+            self.logger.log_agent_activity(
+                "interpreter",
+                "query_validated" if is_valid else "query_rejected",
+                {"user_query": user_query, "valid": is_valid},
+                interpretation_result
+            )
+
+            # Check if query was rejected by guardrails
+            if interpretation_result.get("status") == "rejected":
+                rejection_reason = interpretation_result.get("reason", "Consulta no válida")
+                print(f"🚫 Consulta rechazada: {rejection_reason}")
+
+                self.logger.log_agent_activity(
+                    "orchestrator",
+                    "workflow_terminated_rejection",
+                    {"user_query": user_query, "reason": rejection_reason}
+                )
+
+                # Mensaje amigable para el usuario (sin revelar detalles de seguridad)
+                user_message = self._get_rejection_message(rejection_reason)
+
+                return {
+                    "success": False,
+                    "rejected": True,
+                    "error": user_message,
+                    "reason": rejection_reason,  # Para logs internos
+                    "user_query": user_query,
+                    "executive_response": "",
+                    "final_response": "",
+                    "agents_used": ["Interpreter"]
+                }
+
             workflow_data.update(interpretation_result)
+            print("✅ Consulta validada")
 
             # Step 2: Create execution plan with task management
             print("📋 Creando plan de ejecución...")
@@ -234,6 +269,17 @@ class AgentOrchestrator:
                 "success": False,
                 "error": str(e)
             }
+
+    def _get_rejection_message(self, reason: str) -> str:
+        """
+        Generate user-friendly rejection message.
+        Always returns same friendly message with examples (reason is logged separately).
+        """
+        return (
+            "Solo puedo responder consultas sobre datos forestales y de fauna silvestre de SERFOR. "
+            "Por ejemplo: '¿Cuántos títulos habilitantes hay en Loreto?' o "
+            "'¿Cuáles son las plantaciones registradas en Cusco?'"
+        )
 
     def _should_generate_visualization(self, query_results: list, user_query: str) -> bool:
         """

@@ -86,8 +86,16 @@ FORMATO DE NÚMEROS (OBLIGATORIO):
 - Redondear los datos ANTES de graficar: df_1['columna'] = df_1['columna'].round(1)
 - Formatear ejes con: fig.update_yaxis(tickformat=",.1f") o fig.update_xaxis(tickformat=",.1f")
 
-GENERA MÁXIMO 1-2 VISUALIZACIONES que realmente aporten valor.
-No generes por generar - calidad sobre cantidad.
+REGLA - RELEVANCIA DE COLUMNAS PARA GRÁFICOS:
+
+Evaluar cada columna del resultado para determinar si amerita un gráfico:
+
+Columnas relevantes para visualizar:
+  - Columnas categóricas (Situacion, Departamento, TipoTh, OtorgaPermiso, FinalidadPlantacion, etc.)
+  - Columnas numéricas agregadas (COUNT, SUM, AVG)
+  - Columnas temporales (Año, Mes)
+
+Si el resultado tiene múltiples columnas relevantes, considerar generar un gráfico por cada una en lugar de un solo gráfico.
 
 FORMATO DE RESPUESTA (si decides visualizar):
 

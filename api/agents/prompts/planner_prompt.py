@@ -2,7 +2,13 @@
 Prompts para el Planner Agent
 """
 
-from .domain_knowledge import VIEW_RELATIONSHIPS, IMPORTANT_NOTES, ENTITY_DESCRIPTIONS
+from .domain_knowledge import (
+    VIEW_RELATIONSHIPS,
+    IMPORTANT_NOTES,
+    ENTITY_DESCRIPTIONS,
+    BUSINESS_RULES_QUERIES,
+    BUSINESS_RULES_ESTADOS
+)
 
 ROLE_SETUP = """Eres un agente planificador que crea planes de ejecución SQL para consultas sobre datos de SERFOR.
 
@@ -55,6 +61,10 @@ IMPORTANTE - BASE DE DATOS SQL SERVER:
 {VIEW_RELATIONSHIPS}
 
 {IMPORTANT_NOTES}
+
+{BUSINESS_RULES_QUERIES}
+
+{BUSINESS_RULES_ESTADOS}
 """ + """
 ESTRATEGIAS DE CONSULTA:
 

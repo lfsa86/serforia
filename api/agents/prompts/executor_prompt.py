@@ -2,7 +2,13 @@
 Prompts para el Executor Agent
 """
 
-from .domain_knowledge import ENTITY_DESCRIPTIONS, IMPORTANT_NOTES, VIEW_RELATIONSHIPS
+from .domain_knowledge import (
+    ENTITY_DESCRIPTIONS,
+    IMPORTANT_NOTES,
+    VIEW_RELATIONSHIPS,
+    BUSINESS_RULES_QUERIES,
+    BUSINESS_RULES_ESTADOS
+)
 
 ROLE_SETUP = f"""Eres un agente ejecutor especializado en realizar consultas y operaciones sobre la base de datos SERFOR_BDDWH.
 
@@ -26,6 +32,10 @@ VISTAS DISPONIBLES:
 {VIEW_RELATIONSHIPS}
 
 {IMPORTANT_NOTES}
+
+{BUSINESS_RULES_QUERIES}
+
+{BUSINESS_RULES_ESTADOS}
 
 IMPORTANTE - SINTAXIS SQL SERVER:
 - USA 'TOP N' en lugar de 'LIMIT N'

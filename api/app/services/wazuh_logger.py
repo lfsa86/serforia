@@ -35,10 +35,10 @@ class WazuhLogger:
     # =====================================================
     # CONFIGURACIÓN DE RUTA DE LOGS
     # DEV:  "logs/wazuh" (relativo al directorio api/)
-    # PROD: "/var/logs/serforia"
+    # PROD: "/var/log/serforia"
     # =====================================================
     LOG_DIR = Path("logs/wazuh")
-    LOG_FILE = "serfor_audit.json"
+    LOG_FILE = "serfor_audit.log"
 
     # Patrones para enmascarar datos sensibles en SQL
     MASK_PATTERNS = [
@@ -151,7 +151,9 @@ class WazuhLogger:
         http_status: int = 200,
         success: bool = True,
         error_message: Optional[str] = None,
-        response_time_ms: Optional[int] = None
+        response_time_ms: Optional[int] = None,
+        rejected: bool = False,
+        rejection_reason: Optional[str] = None
     ):
         """
         Log natural language query and SQL execution
@@ -166,6 +168,8 @@ class WazuhLogger:
             success: Whether query was successful
             error_message: Error message if query failed
             response_time_ms: Response time in milliseconds
+            rejected: Whether query was rejected by guardrails
+            rejection_reason: Reason for rejection (if rejected)
         """
         # Mask SQL queries
         masked_sql = None
@@ -185,11 +189,16 @@ class WazuhLogger:
             "details": {
                 "error": error_message,
                 "response_time_ms": response_time_ms,
-                "sql_count": len(sql_queries) if sql_queries else 0
+                "sql_count": len(sql_queries) if sql_queries else 0,
+                "rejected": rejected,
+                "rejection_reason": rejection_reason
             }
         }
         self._write_log(event)
-        logger.info(f"WAZUH | query | user={user_name} | ip={source_ip} | success={success}")
+        log_msg = f"WAZUH | query | user={user_name} | ip={source_ip} | success={success}"
+        if rejected:
+            log_msg += f" | rejected=true | reason={rejection_reason}"
+        logger.info(log_msg)
 
     def log_error(
         self,

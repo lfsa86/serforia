@@ -166,3 +166,164 @@ RNPF: Registro Nacional de Plantaciones Forestales
 CTP: Centro de Transformación Primaria
 CUS: Cambio de Uso de Suelo
 """
+
+# =============================================================================
+# REGLAS DE NEGOCIO
+# =============================================================================
+
+BUSINESS_RULES_QUERIES = """
+REGLA - TÍTULOS HABILITANTES (QUERIES):
+
+Para consultas sobre V_TITULOHABILITANTE:
+  - SIEMPRE incluir en SELECT y GROUP BY:
+    * Situacion
+    * OtorgaPermiso
+  - Esto aplica incluso si el usuario no lo pide explícitamente
+
+Ejemplo: "¿Cuántos títulos habilitantes hay en Loreto?"
+  SELECT Situacion, OtorgaPermiso, COUNT(*) as Cantidad
+  FROM V_TITULOHABILITANTE
+  WHERE Departamento = 'LORETO'
+  GROUP BY Situacion, OtorgaPermiso
+
+
+REGLA - CONSULTAS CON PERIODOS DE TIEMPO (QUERIES):
+
+Cuando la consulta involucre un rango de tiempo:
+  - Incluir la columna de año/mes en SELECT y GROUP BY
+  - Usar YEAR() o MONTH() según la granularidad del periodo
+
+Ejemplo: "¿Cuántas infracciones hubo entre 2020 y 2023?"
+  SELECT YEAR(FechaResolucion) as Anio, COUNT(*) as Cantidad
+  FROM V_INFRACTOR
+  WHERE YEAR(FechaResolucion) BETWEEN 2020 AND 2023
+  GROUP BY YEAR(FechaResolucion)
+
+
+REGLA - ORDENAMIENTO DE RESULTADOS:
+
+Los resultados de las queries deben ordenarse de forma coherente:
+  - Consultas con conteos: ORDER BY cantidad DESC (mostrar primero los más relevantes)
+  - Consultas con fechas: ORDER BY fecha DESC (mostrar primero los más recientes)
+  - Consultas con montos/superficies: ORDER BY monto DESC (mostrar primero los mayores)
+  - Consultas con nombres/titulares: ORDER BY nombre ASC (orden alfabético)
+
+Ejemplo: "¿Cuántos títulos hay por departamento?"
+  SELECT Departamento, COUNT(*) as Cantidad
+  FROM V_TITULOHABILITANTE
+  GROUP BY Departamento
+  ORDER BY Cantidad DESC
+
+
+REGLA - SUPERFICIES EN CAMBIO DE USO Y DESBOSQUE (QUERIES):
+
+En V_CAMBIO_USO y V_AUTORIZACION_DESBOSQUE, cuando consulten sobre área, superficie o hectáreas:
+  - SIEMPRE incluir las tres columnas: Superficie, SuperficieConservar, SuperficieDesbosque
+
+Ejemplo: "¿Cuál es la superficie autorizada para cambio de uso en San Martín?"
+  SELECT Titular, Superficie, SuperficieConservar, SuperficieDesbosque
+  FROM V_CAMBIO_USO
+  WHERE Departamento = 'SAN MARTIN'
+
+
+REGLA - PLANTACIONES (QUERIES):
+
+En consultas sobre V_PLANTACION, SIEMPRE desagregar por FinalidadPlantacion:
+  - Valores posibles: PRODUCCION, PROTECCION, RESTAURACION
+  - Incluir en SELECT y GROUP BY aunque el usuario no lo pida explícitamente
+
+Ejemplo: "¿Cuántas plantaciones hay en Cusco?"
+  SELECT FinalidadPlantacion, COUNT(*) as Cantidad
+  FROM V_PLANTACION
+  WHERE Departamento = 'CUSCO'
+  GROUP BY FinalidadPlantacion
+
+
+REGLA - LICENCIAS DE CAZA (QUERIES):
+
+En V_LICENCIA_CAZA, la columna EstadoLicencia siempre dice "APROBADA", pero eso no significa que esté vigente.
+La columna CausalExtincion determina el estado real:
+  - CausalExtincion IS NULL: licencia vigente/activa
+  - CausalExtincion IS NOT NULL: licencia extinta (no vigente)
+
+Cuando pregunten por:
+  - Licencias vigentes/activas/aprobadas: WHERE CausalExtincion IS NULL
+  - Licencias extintas/canceladas/vencidas: WHERE CausalExtincion IS NOT NULL
+
+Ejemplo: "¿Cuántas licencias de caza están vigentes?"
+  SELECT COUNT(*) as Cantidad
+  FROM V_LICENCIA_CAZA
+  WHERE CausalExtincion IS NULL
+
+Ejemplo: "¿Cuántas licencias de caza están extintas?"
+  SELECT CausalExtincion, COUNT(*) as Cantidad
+  FROM V_LICENCIA_CAZA
+  WHERE CausalExtincion IS NOT NULL
+  GROUP BY CausalExtincion
+
+
+REGLA - FECHAS EN TÍTULOS HABILITANTES (QUERIES):
+
+En V_TITULOHABILITANTE:
+  - FechaDocumento: fecha de EMISIÓN del título
+  - FechaInicio/FechaFin: PERIODO de vigencia habilitado
+
+Cuando pregunten por:
+  - "¿Cuándo se emitió/otorgó?": usar FechaDocumento
+  - "¿Cuándo empieza/termina la vigencia?": usar FechaInicio/FechaFin
+  - "Títulos emitidos en 2023": WHERE YEAR(FechaDocumento) = 2023
+  - "Títulos vigentes en 2024": WHERE FechaInicio <= '2024-12-31' AND FechaFin >= '2024-01-01'
+
+
+REGLA - VALORES DE COLUMNAS CATEGÓRICAS:
+
+V_TITULOHABILITANTE:
+  - TipoTh: AUTORIZACIONES, BOSQUE LOCAL, CAMBIO DE USO, CESIÓN EN USO, CONCESIONES, DESBOSQUE, PERMISOS
+  - TipoConcesion: CONSERVACIÓN, ECOTURISMO, FAUNA SILVESTRE, FINES MADERABLES, FORESTACIÓN Y/O REFORESTACIÓN, NO APLICA, PLANTACIONES FORESTALES, PRODUCTOS FORESTALES DIFERENTES A LA MADERA
+  - Categoriapermiso: BOSQUE SECO, FAUNA SILVESTRE, MADERABLE, NO APLICA, NO MADERABLE
+  - OtorgaPermiso: COMUNIDAD CAMPESINA, COMUNIDAD NATIVA, NO APLICA, PREDIO PRIVADO, TIERRAS DE DOMINIO PÚBLICO
+
+V_PLANTACION:
+  - FinalidadPlantacion: PRODUCCION, PROTECCION, RESTAURACION
+  - Region: COSTA, SELVA, SIERRA
+  - TipoPersona: PERSONA JURIDICA, PERSONA NATURAL
+  - RegimenTenencia: COMUNIDAD CAMPESINA, COMUNIDAD NATIVA, NO APLICA, PREDIO PRIVADO, TIERRAS DE DOMINIO PÚBLICO
+  - TipoComunidad: CAMPESINA, NATIVA
+
+V_AUTORIZACION_DEPOSITO:
+  - TipoDeposito: DEPOSITO, ESTABLECIMIENTO COMERCIAL, LUGAR DE ACOPIO
+
+V_AUTORIZACION_CTP:
+  - TipoRecurso: FAUNA SILVESTRE, FORESTAL
+  - LineaProduccionGiro: ASERRADERO, LAMINADORA, PRODUCCION DE CARBON VEGETAL, TRIPLAYERA, otros
+
+Usar estos valores exactos en las queries (respetando mayúsculas).
+"""
+
+BUSINESS_RULES_ESTADOS = """
+REGLA - ESTADOS Y SITUACIONES:
+
+Los términos "Estado" y "Situación" son sinónimos en el contexto de SERFOR.
+
+Columnas de estado por tabla:
+  - V_TITULOHABILITANTE.Situacion: VIGENTE, NO VIGENTE, EXTINGUIDO
+  - V_CAMBIO_USO.Situacion: VIGENTE, NO VIGENTE, EXTINGUIDO
+  - V_AUTORIZACION_DESBOSQUE.Situacion: VIGENTE, NO VIGENTE
+  - V_AUTORIZACION_CTP.Estado: VIGENTE
+  - V_AUTORIZACION_DEPOSITO.Estado: VIGENTE
+  - V_LICENCIA_CAZA.EstadoLicencia: APROBADA
+    NOTA: Para licencias extintas, verificar columna CausalExtincion (si no es NULL, la licencia está extinta aunque EstadoLicencia diga APROBADA)
+
+Tablas SIN columna de estado:
+  - V_PLANTACION (no aplica esta regla)
+  - V_INFRACTOR (no aplica esta regla)
+
+Comportamiento cuando el usuario NO especifica un estado:
+  - La query debe incluir la columna de estado en el SELECT
+  - Agregar GROUP BY por la columna de estado
+  - La respuesta debe mostrar los resultados desglosados por cada estado
+
+Ejemplo: Si preguntan "¿Cuántos títulos habilitantes hay en Lima?"
+  - NO hacer: SELECT COUNT(*) FROM V_TITULOHABILITANTE WHERE Departamento = 'LIMA'
+  - SÍ hacer: SELECT Situacion, COUNT(*) as Cantidad FROM V_TITULOHABILITANTE WHERE Departamento = 'LIMA' GROUP BY Situacion
+"""
