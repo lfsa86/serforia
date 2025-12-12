@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
@@ -13,7 +14,18 @@ export const Login = () => {
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { login } = useAuth();
+
+  // Mostrar toast si viene de sesión expirada
+  useEffect(() => {
+    const expired = searchParams.get('expired');
+    if (expired === 'true') {
+      toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', { duration: 4000 });
+      // Limpiar el parámetro de la URL
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   // Background carousel effect
   useEffect(() => {

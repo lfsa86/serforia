@@ -6,7 +6,7 @@ import json
 import re
 from .base_agent import BaseAgent
 from .prompts.interpreter_prompt import ROLE_SETUP, INTERPRETATION_PROMPT_TEMPLATE
-from .utils import format_schema_for_prompt
+
 
 class InterpreterAgent(BaseAgent):
     """Agent that interprets user requests and extracts structured information"""
@@ -15,7 +15,7 @@ class InterpreterAgent(BaseAgent):
         super().__init__(
             name="Interpreter",
             role_setup=ROLE_SETUP,
-            temperature=0.1
+            temperature=0.2
         )
 
     def _clean_json_response(self, response: str) -> str:
@@ -58,14 +58,9 @@ class InterpreterAgent(BaseAgent):
             Dictionary with extracted intent information
         """
         user_query = input_data.get("user_query", "")
-        schema_info = input_data.get("schema_info", {})
-
-        # Format schema using shared utility
-        schema_details = format_schema_for_prompt(schema_info)
 
         prompt = INTERPRETATION_PROMPT_TEMPLATE.format(
-            user_query=user_query,
-            schema_info=schema_details
+            user_query=user_query
         )
 
         response = self.run(prompt)
@@ -79,7 +74,8 @@ class InterpreterAgent(BaseAgent):
                 "status": "validated",
                 "valid": True,
                 "user_query": user_query,
-                "interpretation": json.dumps(parsed.get("interpretation", {}), ensure_ascii=False),
+                "entities": parsed.get("entities", []),
+                "interpretation": parsed.get("interpretation", ""),
                 "agent": self.name
             }
         else:

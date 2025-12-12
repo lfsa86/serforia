@@ -6,20 +6,20 @@ from typing import Optional
 
 from ..core import settings
 from ..models.auth import UserInfo
-from ..services.session_store import get_session_store
+from ..services.jwt_utils import decode_token
 
 
 async def get_current_user(
     authorization: Optional[str] = Header(None)
 ) -> UserInfo:
     """
-    Dependency to get current authenticated user
+    Dependency to get current authenticated user from JWT token
 
     Args:
         authorization: Authorization header with Bearer token
 
     Returns:
-        UserInfo of the authenticated user
+        UserInfo of the authenticated user (decoded from JWT)
 
     Raises:
         HTTPException: If authentication fails
@@ -52,14 +52,13 @@ async def get_current_user(
 
     token = parts[1]
 
-    # Look up user in session store
-    session_store = get_session_store()
-    user_info = session_store.get(token)
+    # Decode JWT to get user info (stateless)
+    user_info = decode_token(token)
 
     if user_info:
         return user_info
 
-    # Token not found in session store
+    # Token invalid or expired
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Sesión expirada o inválida. Por favor, inicie sesión nuevamente.",

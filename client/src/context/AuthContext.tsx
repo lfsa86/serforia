@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { authService } from '../services/auth';
 import type { UserInfo } from '../types/auth';
+
+const TOKEN_CHECK_INTERVAL = 5 * 60 * 1000; // Verificar cada 5 minutos
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -30,18 +32,46 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const handleSessionExpired = useCallback(() => {
+    authService.logout();
+    setToken(null);
+    setUser(null);
+    window.location.href = '/login?expired=true';
+  }, []);
+
   useEffect(() => {
     // Initialize auth state from localStorage
     const storedToken = authService.getToken();
     const storedUser = authService.getUser();
 
     if (storedToken && storedUser) {
+      // Verificar si el token ya expiró al cargar
+      if (authService.isTokenExpired()) {
+        handleSessionExpired();
+        setIsLoading(false);
+        return;
+      }
       setToken(storedToken);
       setUser(storedUser);
     }
 
     setIsLoading(false);
-  }, []);
+  }, [handleSessionExpired]);
+
+  // Verificación periódica de expiración del token
+  useEffect(() => {
+    if (!token) return;
+
+    const checkTokenExpiration = () => {
+      if (authService.isTokenExpired()) {
+        handleSessionExpired();
+      }
+    };
+
+    const intervalId = setInterval(checkTokenExpiration, TOKEN_CHECK_INTERVAL);
+
+    return () => clearInterval(intervalId);
+  }, [token, handleSessionExpired]);
 
   const login = async (usuario: string, password: string): Promise<boolean> => {
     try {

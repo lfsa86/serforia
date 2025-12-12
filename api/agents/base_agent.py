@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional
 from instantneo import InstantNeo, SkillManager
 from dotenv import load_dotenv
 import os
+from utils.logger import get_logger
 
 load_dotenv()
 
@@ -24,6 +25,7 @@ class BaseAgent(ABC):
     ):
         self.name = name
         self.role_setup = role_setup
+        self.logger = get_logger()
 
         # Initialize InstantNeo agent
         self.agent = InstantNeo(
@@ -42,8 +44,18 @@ class BaseAgent(ABC):
         pass
 
     def run(self, prompt: str, **kwargs) -> str:
-        """Direct interface to the underlying InstantNeo agent"""
-        return self.agent.run(prompt, **kwargs)
+        """Direct interface to the underlying InstantNeo agent with logging"""
+        # Log agent start with prompts
+        self.logger.log_agent_start(self.name, self.role_setup, prompt)
+
+        try:
+            response = self.agent.run(prompt, **kwargs)
+            # Log agent end with response
+            self.logger.log_agent_end(self.name, response)
+            return response
+        except Exception as e:
+            self.logger.log_agent_end(self.name, "", error=str(e))
+            raise
 
     def get_info(self) -> Dict[str, str]:
         """Return agent information"""

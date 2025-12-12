@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     AUTH_DEV_PASSWORD: str = "dev123"
     AUTH_FALLBACK_ON_ERROR: bool = False
 
+    # JWT Settings
+    JWT_SECRET: str = "serfor-jwt-secret-change-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRATION_HOURS: int = 2
+
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins into a list"""

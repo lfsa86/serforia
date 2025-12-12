@@ -7,7 +7,6 @@ import logging
 from ..models.auth import LoginRequest, LoginResponse
 from ..services.auth_service import get_auth_service
 from ..services.wazuh_logger import get_wazuh_logger
-from ..services.session_store import get_session_store
 from ..core import settings
 
 router = APIRouter()
@@ -24,10 +23,9 @@ async def login(request: LoginRequest, req: Request):
         req: FastAPI Request object to extract client IP
 
     Returns:
-        LoginResponse with token and user info if successful
+        LoginResponse with JWT token and user info if successful
     """
     wazuh = get_wazuh_logger()
-    session_store = get_session_store()
     client_ip = req.client.host if req.client else "unknown"
     auth_mode = "DEV" if settings.AUTH_DEV_MODE else "SGI"
 
@@ -40,10 +38,9 @@ async def login(request: LoginRequest, req: Request):
             client_ip=client_ip
         )
 
-        # Store session if login successful
-        if result.success and result.token and result.user:
-            session_store.store(result.token, result.user)
-            logger.info(f"Session stored | user_id={result.user.id} | active_sessions={session_store.active_sessions_count()}")
+        # JWT token contains user info - no session store needed
+        if result.success and result.user:
+            logger.info(f"Login success | user_id={result.user.id} | stateless JWT")
 
         # Log to WAZUH
         wazuh.log_login(

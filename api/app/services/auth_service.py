@@ -8,6 +8,7 @@ from typing import Optional
 
 from ..core import settings
 from ..models.auth import LoginResponse, UserInfo
+from .jwt_utils import create_token
 
 logger = logging.getLogger(__name__)
 
@@ -90,15 +91,16 @@ class AuthService:
             logger.info(
                 f"DEV login success | usuario={usuario} | ip={client_ip}"
             )
+            user_info = UserInfo(
+                id=999,
+                nombre=usuario,
+                sistema_id=self.sistema_id,
+                compagnia_id=self.compagnia_id
+            )
             return LoginResponse(
                 success=True,
-                token="dev_mock_token_12345",
-                user=UserInfo(
-                    id=999,
-                    nombre=usuario,
-                    sistema_id=self.sistema_id,
-                    compagnia_id=self.compagnia_id
-                )
+                token=create_token(user_info),
+                user=user_info
             )
         else:
             logger.warning(
@@ -183,9 +185,10 @@ class AuthService:
                     f"SGI login success | usuario={usuario} | user_id={user_info.id} | ip={client_ip}"
                 )
 
+                # Create our own JWT with user info (stateless auth)
                 return LoginResponse(
                     success=True,
-                    token=token,
+                    token=create_token(user_info),
                     user=user_info
                 )
             else:

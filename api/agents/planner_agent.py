@@ -47,9 +47,6 @@ class PlannerAgent(BaseAgent):
 
         response = self.run(prompt)
 
-        # Log the raw response from the agent
-        self.logger.log_agent_activity("planner", "raw_response_received", prompt, response)
-
         # Clean and parse the response
         cleaned_response = self._clean_json_response(response)
 
@@ -78,14 +75,9 @@ class PlannerAgent(BaseAgent):
         task_manager = TaskManager()
 
         try:
-            # Log JSON parsing attempt
-            self.logger.log_json_parsing("planner", plan_json)
-
             # Parse JSON plan
             plan_data = json.loads(plan_json)
             steps = plan_data.get("steps", [])
-
-            self.logger.log_json_parsing("planner", plan_json, plan_data)
 
             # Create task mapping for dependencies
             step_id_to_task_id = {}
@@ -116,7 +108,6 @@ class PlannerAgent(BaseAgent):
         except json.JSONDecodeError as e:
             # Log JSON parsing error
             self.logger.log_json_parsing("planner", plan_json, None, str(e))
-            self.logger.log_error("planner_json_parsing", str(e), {"raw_plan": plan_json})
 
             # Create fallback task if JSON parsing fails
             fallback_task = ExecutionTask(
@@ -152,7 +143,5 @@ class PlannerAgent(BaseAgent):
 
         if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
             response = response[start_idx:end_idx + 1]
-
-        self.logger.log_agent_activity("planner", "json_cleaning", response, f"Cleaned to: {response}...")
 
         return response

@@ -36,11 +36,9 @@ Ejemplo de formato:
 }"""
 
 PLANNING_PROMPT_TEMPLATE = """
-Basándote en esta interpretación de la consulta del usuario:
+Consulta del usuario: "{user_query}"
 
-Consulta original: "{user_query}"
-
-Interpretación: {interpretation}
+Interpretación de la consulta: {interpretation}
 
 {schema_details}
 

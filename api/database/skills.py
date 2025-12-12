@@ -43,7 +43,7 @@ def execute_select_query(query: str) -> str:
 
         # Log the executed query
         print(f"🔍 SQL EJECUTADO: {query}")
-        logger.log_sql_query(query, result["success"], result.get("row_count", 0), result.get("error"))
+        logger.log_sql_query(query, result["success"], result.get("row_count", 0), result.get("error"), result.get("columns"))
 
         if result["success"]:
             print(f"✅ Consulta exitosa: {result['row_count']} filas devueltas")
@@ -136,7 +136,7 @@ def execute_complex_query(query: str) -> str:
 
         # Log the executed query
         print(f"🔍 COMPLEX SQL EJECUTADO: {query}")
-        logger.log_sql_query(query, result["success"], result.get("row_count", 0), result.get("error"))
+        logger.log_sql_query(query, result["success"], result.get("row_count", 0), result.get("error"), result.get("columns"))
 
         if result["success"]:
             print(f"✅ Consulta compleja exitosa: {result['row_count']} filas devueltas")

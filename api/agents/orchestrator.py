@@ -129,6 +129,9 @@ class AgentOrchestrator:
                     {"user_query": user_query, "reason": rejection_reason}
                 )
 
+                # Log rejected query completion
+                self.logger.log_query_complete(success=False, error=f"Query rejected: {rejection_reason}")
+
                 # Mensaje amigable para el usuario (sin revelar detalles de seguridad)
                 user_message = self._get_rejection_message(rejection_reason)
 
@@ -254,6 +257,9 @@ class AgentOrchestrator:
             clean_workflow = {k: v for k, v in workflow_data.items()
                             if k not in ('task_manager', 'schema_info') and not callable(v)}
 
+            # Log successful query completion
+            self.logger.log_query_complete(success=True)
+
             return {
                 "success": True,
                 "workflow_data": clean_workflow,
@@ -265,6 +271,8 @@ class AgentOrchestrator:
             }
 
         except Exception as e:
+            # Log failed query completion
+            self.logger.log_query_complete(success=False, error=str(e))
             return {
                 "success": False,
                 "error": str(e)

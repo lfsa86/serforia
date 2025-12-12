@@ -100,14 +100,27 @@ Para consultas simples de una sola tabla, NO agregar JOINs.
 
 COLUMNAS DE RELACIÓN (usar con =):
   - NumeroDocumento: identificador principal para relacionar titulares entre vistas
-  - TituloHabilitante: código del título habilitante
+  - TituloHabilitante: código del título habilitante (solo V_INFRACTOR ↔ V_TITULOHABILITANTE)
 
-V_INFRACTOR ↔ V_TITULOHABILITANTE:
-  - JOIN por: NumeroDocumento o TituloHabilitante (con =)
-  - Usar SOLO cuando necesitas ubicación geográfica (Departamento, Provincia, Distrito)
+JOINs DISPONIBLES (todas por NumeroDocumento con =):
+
+V_INFRACTOR puede cruzarse con:
+  - V_TITULOHABILITANTE: para obtener ubicación (Departamento, Provincia, Distrito)
+  - V_PLANTACION: para encontrar plantaciones de infractores
+  - V_LICENCIA_CAZA: para encontrar licencias de caza de infractores
+  - V_AUTORIZACION_CTP: para encontrar CTPs de infractores
+  - V_AUTORIZACION_DEPOSITO: para encontrar depósitos de infractores
+
+V_TITULOHABILITANTE puede cruzarse con:
+  - V_PLANTACION, V_LICENCIA_CAZA, V_AUTORIZACION_CTP, V_AUTORIZACION_DEPOSITO,
+    V_AUTORIZACION_DESBOSQUE, V_CAMBIO_USO (todo por NumeroDocumento)
+
+CASO ESPECIAL - V_INFRACTOR ↔ V_TITULOHABILITANTE:
+  - Usar SOLO cuando necesitas ubicación geográfica (V_INFRACTOR no tiene Departamento)
   - Si solo necesitas datos del infractor, consultar V_INFRACTOR directamente SIN JOIN
 
-V_CAMBIO_USO → V_AUTORIZACION_DESBOSQUE:
+RELACIÓN DE NEGOCIO:
+  V_CAMBIO_USO → V_AUTORIZACION_DESBOSQUE:
   - El cambio de uso es PREVIO al desbosque para fines agrícolas
 """
 

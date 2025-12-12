@@ -31,6 +31,9 @@ class QueryResponse(BaseModel):
     sql_queries: Optional[List[Dict[str, Any]]] = None
     error: Optional[str] = None
     workflow_data: Optional[Dict[str, Any]] = None
+    # Guardrails rejection fields
+    rejected: Optional[bool] = None
+    reason: Optional[str] = None
 
 
 class HealthResponse(BaseModel):

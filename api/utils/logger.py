@@ -4,8 +4,9 @@ Comprehensive logging system for SERFOR multi-agent system
 import json
 import os
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from pathlib import Path
+import time
 
 class SerforLogger:
     """Centralized logging system for the SERFOR multi-agent system"""
@@ -14,148 +15,116 @@ class SerforLogger:
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(exist_ok=True)
 
-        # Create session-specific log file
+        # Create session-specific log file (only detailed txt)
         self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.session_log_file = self.log_dir / f"session_{self.session_id}.json"
         self.detailed_log_file = self.log_dir / f"detailed_{self.session_id}.txt"
 
-        # Initialize session log
-        self.session_data = {
-            "session_id": self.session_id,
-            "start_time": datetime.now().isoformat(),
-            "queries": [],
-            "agents_activity": [],
-            "sql_queries": [],
-            "errors": [],
-            "performance_metrics": {}
-        }
+        # Track timing for performance metrics
+        self.query_start_time: float = None
+        self.agent_start_times: Dict[str, float] = {}
+        self.current_task_id: str = None
 
-        self._write_session_log()
         self._write_detailed_log(f"=== SESSION STARTED: {self.session_id} ===")
 
     def log_user_query(self, query: str):
-        """Log user query"""
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "type": "user_query",
-            "query": query
-        }
-        self.session_data["queries"].append(entry)
-        self._write_session_log()
+        """Log user query and start query timer"""
+        self.query_start_time = time.time()
+        self._write_detailed_log(f"\n{'='*80}")
         self._write_detailed_log(f"USER QUERY: {query}")
+        self._write_detailed_log(f"{'='*80}")
 
     def log_agent_activity(self, agent_name: str, action: str, input_data: Any = None, output_data: Any = None, error: str = None):
-        """Log agent activity"""
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "agent": agent_name,
-            "action": action,
-            "input_summary": str(input_data) + "..." if input_data and len(str(input_data)) > 200 else str(input_data),
-            "output_summary": str(output_data) + "..." if output_data and len(str(output_data)) > 200 else str(output_data),
-            "error": error,
-            "success": error is None
-        }
-
-        self.session_data["agents_activity"].append(entry)
-        self._write_session_log()
-
+        """Log agent activity (simplified, no redundant data)"""
         status = "SUCCESS" if error is None else "ERROR"
         self._write_detailed_log(f"AGENT [{agent_name}] {action}: {status}")
         if error:
             self._write_detailed_log(f"  ERROR: {error}")
-        if input_data:
-            self._write_detailed_log(f"  INPUT: {self._safe_str(input_data)}")
-        if output_data:
-            self._write_detailed_log(f"  OUTPUT: {self._safe_str(output_data)}")
 
-    def log_sql_query(self, query: str, success: bool, result_count: int = 0, error: str = None):
-        """Log SQL query execution"""
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "query": query,
-            "success": success,
-            "result_count": result_count,
-            "error": error
-        }
-
-        self.session_data["sql_queries"].append(entry)
-        self._write_session_log()
-
+    def log_sql_query(self, query: str, success: bool, result_count: int = 0, error: str = None, columns: List[str] = None):
+        """Log SQL query execution with summary (no raw data)"""
+        task_context = f" (task: {self.current_task_id})" if self.current_task_id else ""
         status = "SUCCESS" if success else "ERROR"
-        self._write_detailed_log(f"SQL QUERY {status}: {query}")
+        self._write_detailed_log(f"SQL QUERY {status}{task_context}:")
+        self._write_detailed_log(f"  QUERY: {query}")
         if success:
-            self._write_detailed_log(f"  RESULTS: {result_count} rows")
+            col_info = f", columns: {columns}" if columns else ""
+            self._write_detailed_log(f"  RESULT: {result_count} rows{col_info}")
         else:
             self._write_detailed_log(f"  ERROR: {error}")
 
     def log_error(self, component: str, error_message: str, context: Dict[str, Any] = None):
         """Log errors"""
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "component": component,
-            "error": error_message,
-            "context": context
-        }
-
-        self.session_data["errors"].append(entry)
-        self._write_session_log()
         self._write_detailed_log(f"ERROR in {component}: {error_message}")
         if context:
             self._write_detailed_log(f"  CONTEXT: {self._safe_str(context)}")
 
     def log_task_execution(self, task_id: str, description: str, status: str, result: Any = None, error: str = None):
         """Log task execution details"""
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "type": "task_execution",
-            "task_id": task_id,
-            "description": description,
-            "status": status,
-            "result_summary": str(result) + "..." if result and len(str(result)) > 200 else str(result),
-            "error": error
-        }
+        # Track current task for SQL query context
+        if status == "in_progress":
+            self.current_task_id = task_id
+        elif status in ("success", "failed", "completed"):
+            self.current_task_id = None
 
-        self.session_data["agents_activity"].append(entry)
-        self._write_session_log()
-
-        self._write_detailed_log(f"TASK [{task_id}] {description}: {status}")
-        if result:
-            self._write_detailed_log(f"  RESULT: {self._safe_str(result)}")
+        self._write_detailed_log(f"TASK [{task_id[:8]}] {description}: {status}")
         if error:
             self._write_detailed_log(f"  ERROR: {error}")
 
     def log_json_parsing(self, agent_name: str, raw_response: str, parsed_data: Any = None, error: str = None):
-        """Log JSON parsing attempts"""
-        self._write_detailed_log(f"JSON PARSING in {agent_name}:")
-        self._write_detailed_log(f"  RAW RESPONSE: {raw_response}")
-
+        """Log JSON parsing attempts (only log errors, success is implicit)"""
         if error:
-            self._write_detailed_log(f"  PARSING ERROR: {error}")
-            self.log_error(f"{agent_name}_json_parsing", error, {"raw_response": raw_response})
-        else:
-            self._write_detailed_log(f"  PARSED DATA: {self._safe_str(parsed_data)}")
+            self._write_detailed_log(f"JSON PARSING ERROR in {agent_name}:")
+            self._write_detailed_log(f"  RAW RESPONSE: {raw_response}")
+            self._write_detailed_log(f"  ERROR: {error}")
 
     def get_session_summary(self) -> Dict[str, Any]:
         """Get summary of current session"""
         return {
             "session_id": self.session_id,
-            "queries_count": len(self.session_data["queries"]),
-            "sql_queries_count": len(self.session_data["sql_queries"]),
-            "errors_count": len(self.session_data["errors"]),
-            "agents_activity_count": len(self.session_data["agents_activity"]),
-            "log_files": {
-                "session_log": str(self.session_log_file),
-                "detailed_log": str(self.detailed_log_file)
-            }
+            "detailed_log": str(self.detailed_log_file)
         }
 
-    def _write_session_log(self):
-        """Write session data to JSON file"""
-        try:
-            with open(self.session_log_file, 'w', encoding='utf-8') as f:
-                json.dump(self.session_data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"Error writing session log: {e}")
+    # =========================================================================
+    # NEW METHODS: Agent execution logging with prompts
+    # =========================================================================
+
+    def log_agent_start(self, agent_name: str, system_prompt: str, run_prompt: str):
+        """Log agent execution start with full prompts"""
+        self.agent_start_times[agent_name] = time.time()
+        self._write_detailed_log(f"\n--- AGENT [{agent_name}] START ---")
+        self._write_detailed_log(f"SYSTEM PROMPT:\n{system_prompt}")
+        self._write_detailed_log(f"\nRUN PROMPT:\n{run_prompt}")
+
+    def log_agent_end(self, agent_name: str, response: str, error: str = None):
+        """Log agent execution end with full response and timing"""
+        duration = None
+        if agent_name in self.agent_start_times:
+            duration = time.time() - self.agent_start_times[agent_name]
+            del self.agent_start_times[agent_name]
+
+        duration_str = f" ({duration:.2f}s)" if duration else ""
+        status = "SUCCESS" if error is None else "ERROR"
+
+        self._write_detailed_log(f"\nRESPONSE:\n{response}")
+        self._write_detailed_log(f"--- AGENT [{agent_name}] END: {status}{duration_str} ---")
+        if error:
+            self._write_detailed_log(f"  ERROR: {error}")
+
+    def log_query_complete(self, success: bool, error: str = None):
+        """Log query completion with total time"""
+        duration = None
+        if self.query_start_time:
+            duration = time.time() - self.query_start_time
+            self.query_start_time = None
+
+        duration_str = f" in {duration:.2f}s" if duration else ""
+        status = "SUCCESS" if success else "FAILED"
+
+        self._write_detailed_log(f"\n{'='*80}")
+        self._write_detailed_log(f"=== QUERY {status}{duration_str} ===")
+        if error:
+            self._write_detailed_log(f"ERROR: {error}")
+        self._write_detailed_log(f"{'='*80}\n")
 
     def _write_detailed_log(self, message: str):
         """Write detailed log entry"""

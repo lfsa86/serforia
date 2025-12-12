@@ -418,8 +418,8 @@ class DynamicSchemaMapper:
         Define known table relationships for AI agents.
         Todas las vistas comparten: Titular, TipoDocumento, NumeroDocumento
 
-        IMPORTANTE: Usar LIKE para Titular, NumeroDocumento y TituloHabilitante
-        porque los datos no están completamente estandarizados.
+        IMPORTANTE: Usar = para JOINs entre tablas (datos internos consistentes).
+        LIKE es solo para búsquedas de usuario (WHERE Titular LIKE '%texto%').
 
         Returns:
             Dictionary mapping relationship descriptions to JOIN conditions
@@ -427,78 +427,78 @@ class DynamicSchemaMapper:
         return {
             # V_INFRACTOR ↔ V_TITULOHABILITANTE
             "infractor_to_titulo_by_codigo": {
-                "description": "Relacionar infractores con títulos habilitantes por código de título (usar LIKE por datos no estandarizados)",
-                "join_condition": "V_INFRACTOR.TituloHabilitante LIKE '%' + V_TITULOHABILITANTE.TituloHabilitante + '%'",
+                "description": "Relacionar infractores con títulos habilitantes por código de título",
+                "join_condition": "V_INFRACTOR.TituloHabilitante = V_TITULOHABILITANTE.TituloHabilitante",
                 "tables": ["V_INFRACTOR", "V_TITULOHABILITANTE"],
                 "confidence": 0.9
             },
             "infractor_to_titulo_by_documento": {
-                "description": "Relacionar infractores con títulos habilitantes por número de documento (usar LIKE por datos no estandarizados)",
-                "join_condition": "V_INFRACTOR.NumeroDocumento LIKE '%' + V_TITULOHABILITANTE.NumeroDocumento + '%'",
+                "description": "Relacionar infractores con títulos habilitantes por número de documento",
+                "join_condition": "V_INFRACTOR.NumeroDocumento = V_TITULOHABILITANTE.NumeroDocumento",
                 "tables": ["V_INFRACTOR", "V_TITULOHABILITANTE"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             # V_TITULOHABILITANTE ↔ otras vistas por NumeroDocumento
             "titulo_to_plantacion": {
-                "description": "Relacionar títulos habilitantes con plantaciones por número de documento (usar LIKE)",
-                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento LIKE '%' + V_PLANTACION.NumeroDocumento + '%'",
+                "description": "Relacionar títulos habilitantes con plantaciones por número de documento",
+                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento = V_PLANTACION.NumeroDocumento",
                 "tables": ["V_TITULOHABILITANTE", "V_PLANTACION"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             "titulo_to_licencia_caza": {
-                "description": "Relacionar títulos habilitantes con licencias de caza por número de documento (usar LIKE)",
-                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento LIKE '%' + V_LICENCIA_CAZA.NumeroDocumento + '%'",
+                "description": "Relacionar títulos habilitantes con licencias de caza por número de documento",
+                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento = V_LICENCIA_CAZA.NumeroDocumento",
                 "tables": ["V_TITULOHABILITANTE", "V_LICENCIA_CAZA"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             "titulo_to_autorizacion_ctp": {
-                "description": "Relacionar títulos habilitantes con autorizaciones CTP por número de documento (usar LIKE)",
-                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento LIKE '%' + V_AUTORIZACION_CTP.NumeroDocumento + '%'",
+                "description": "Relacionar títulos habilitantes con autorizaciones CTP por número de documento",
+                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento = V_AUTORIZACION_CTP.NumeroDocumento",
                 "tables": ["V_TITULOHABILITANTE", "V_AUTORIZACION_CTP"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             "titulo_to_autorizacion_deposito": {
-                "description": "Relacionar títulos habilitantes con autorizaciones de depósito por número de documento (usar LIKE)",
-                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento LIKE '%' + V_AUTORIZACION_DEPOSITO.NumeroDocumento + '%'",
+                "description": "Relacionar títulos habilitantes con autorizaciones de depósito por número de documento",
+                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento = V_AUTORIZACION_DEPOSITO.NumeroDocumento",
                 "tables": ["V_TITULOHABILITANTE", "V_AUTORIZACION_DEPOSITO"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             "titulo_to_autorizacion_desbosque": {
-                "description": "Relacionar títulos habilitantes con autorizaciones de desbosque por número de documento (usar LIKE)",
-                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento LIKE '%' + V_AUTORIZACION_DESBOSQUE.NumeroDocumento + '%'",
+                "description": "Relacionar títulos habilitantes con autorizaciones de desbosque por número de documento",
+                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento = V_AUTORIZACION_DESBOSQUE.NumeroDocumento",
                 "tables": ["V_TITULOHABILITANTE", "V_AUTORIZACION_DESBOSQUE"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             "titulo_to_cambio_uso": {
-                "description": "Relacionar títulos habilitantes con cambios de uso por número de documento (usar LIKE)",
-                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento LIKE '%' + V_CAMBIO_USO.NumeroDocumento + '%'",
+                "description": "Relacionar títulos habilitantes con cambios de uso por número de documento",
+                "join_condition": "V_TITULOHABILITANTE.NumeroDocumento = V_CAMBIO_USO.NumeroDocumento",
                 "tables": ["V_TITULOHABILITANTE", "V_CAMBIO_USO"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             # V_INFRACTOR ↔ otras vistas por NumeroDocumento
             "infractor_to_plantacion": {
-                "description": "Relacionar infractores con plantaciones por número de documento (usar LIKE)",
-                "join_condition": "V_INFRACTOR.NumeroDocumento LIKE '%' + V_PLANTACION.NumeroDocumento + '%'",
+                "description": "Relacionar infractores con plantaciones por número de documento",
+                "join_condition": "V_INFRACTOR.NumeroDocumento = V_PLANTACION.NumeroDocumento",
                 "tables": ["V_INFRACTOR", "V_PLANTACION"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             "infractor_to_licencia_caza": {
-                "description": "Relacionar infractores con licencias de caza por número de documento (usar LIKE)",
-                "join_condition": "V_INFRACTOR.NumeroDocumento LIKE '%' + V_LICENCIA_CAZA.NumeroDocumento + '%'",
+                "description": "Relacionar infractores con licencias de caza por número de documento",
+                "join_condition": "V_INFRACTOR.NumeroDocumento = V_LICENCIA_CAZA.NumeroDocumento",
                 "tables": ["V_INFRACTOR", "V_LICENCIA_CAZA"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             "infractor_to_autorizacion_ctp": {
-                "description": "Relacionar infractores con autorizaciones CTP por número de documento (usar LIKE)",
-                "join_condition": "V_INFRACTOR.NumeroDocumento LIKE '%' + V_AUTORIZACION_CTP.NumeroDocumento + '%'",
+                "description": "Relacionar infractores con autorizaciones CTP por número de documento",
+                "join_condition": "V_INFRACTOR.NumeroDocumento = V_AUTORIZACION_CTP.NumeroDocumento",
                 "tables": ["V_INFRACTOR", "V_AUTORIZACION_CTP"],
-                "confidence": 0.85
+                "confidence": 0.95
             },
             "infractor_to_autorizacion_deposito": {
-                "description": "Relacionar infractores con autorizaciones de depósito por número de documento (usar LIKE)",
-                "join_condition": "V_INFRACTOR.NumeroDocumento LIKE '%' + V_AUTORIZACION_DEPOSITO.NumeroDocumento + '%'",
+                "description": "Relacionar infractores con autorizaciones de depósito por número de documento",
+                "join_condition": "V_INFRACTOR.NumeroDocumento = V_AUTORIZACION_DEPOSITO.NumeroDocumento",
                 "tables": ["V_INFRACTOR", "V_AUTORIZACION_DEPOSITO"],
-                "confidence": 0.85
+                "confidence": 0.95
             }
         }
 
