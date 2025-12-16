@@ -44,6 +44,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_HOURS: int = 2
 
+    # Docs Protection
+    DOCS_USERNAME: str = "serfor_admin"
+    DOCS_PASSWORD: str = "docs_password_change_in_production"
+
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins into a list"""

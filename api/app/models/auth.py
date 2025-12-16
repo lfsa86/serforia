@@ -1,14 +1,34 @@
 """
 Pydantic models for authentication
 """
-from pydantic import BaseModel, Field
+import re
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
 
 class LoginRequest(BaseModel):
     """Request model for login"""
-    usuario: str = Field(..., min_length=1, description="Username")
-    password: str = Field(..., min_length=1, description="Password in plain text")
+    usuario: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Username"
+    )
+    password: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description="Password in plain text"
+    )
+
+    @field_validator('usuario')
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        """Validate username contains only allowed characters"""
+        # Permitir alfanuméricos, guiones, puntos, guion bajo y arroba
+        if not re.match(r'^[\w.\-@]+$', v):
+            raise ValueError("El usuario contiene caracteres no permitidos")
+        return v.strip()
 
 
 class UserInfo(BaseModel):
