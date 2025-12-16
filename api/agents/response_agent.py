@@ -16,7 +16,8 @@ class ResponseAgent(BaseAgent):
         super().__init__(
             name="Response",
             role_setup=ROLE_SETUP,
-            temperature=0.5
+            temperature=0.5,
+            model='gpt-4.1'
         )
 
     def _generate_data_summary(self, data: List[Dict], task_description: str = "Query") -> Dict[str, Any]:
@@ -73,6 +74,13 @@ class ResponseAgent(BaseAgent):
 
             summary["column_analysis"][col] = col_info
 
+        # Siempre incluir muestra de datos para preservar relaciones entre columnas
+        if len(df) <= 20:
+            summary["sample_data"] = data
+        else:
+            summary["sample_data"] = data[:20]
+            summary["sample_data_note"] = "Primeros 20 resultados de muestra"
+
         return summary
 
     def _summarize_execution_results(self, execution_results: List[Dict]) -> str:
@@ -91,6 +99,9 @@ class ResponseAgent(BaseAgent):
                         data = parsed["data"]
                         task_desc = result.get("description", "Query")
                         summary = self._generate_data_summary(data, task_desc)
+                        # Incluir el SQL ejecutado para que el Response pueda validar
+                        if "query_executed" in parsed:
+                            summary["sql_ejecutado"] = parsed["query_executed"]
                         summaries.append(summary)
                 except Exception as e:
                     summaries.append({
@@ -154,7 +165,6 @@ class ResponseAgent(BaseAgent):
         """
         execution_results = input_data.get("execution_results", [])
         user_query = input_data.get("user_query", "")
-        interpretation = input_data.get("interpretation", "")
 
         # Generate intelligent summary instead of passing all data
         summarized_results = self._summarize_execution_results(execution_results)
@@ -163,7 +173,6 @@ class ResponseAgent(BaseAgent):
 
         prompt = RESPONSE_PROMPT_TEMPLATE.format(
             user_query=user_query,
-            interpretation=interpretation,
             execution_results=summarized_results
         )
 

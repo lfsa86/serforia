@@ -33,7 +33,6 @@ class VisualizationAgent(BaseAgent):
         try:
             structured_results = input_data.get("structured_results", [])
             user_query = input_data.get("user_query", "")
-            interpretation = input_data.get("interpretation", "")
             executive_response = input_data.get("executive_response", "")
 
             # Fallback for legacy format
@@ -62,7 +61,6 @@ class VisualizationAgent(BaseAgent):
             prompt = self._build_visualization_prompt(
                 datasets=structured_results,
                 user_query=user_query,
-                interpretation=interpretation,
                 executive_response=executive_response
             )
             response = self.run(prompt)
@@ -192,7 +190,6 @@ if 'fig' in locals():
         self,
         datasets: List[Dict],
         user_query: str,
-        interpretation: str = "",
         executive_response: str = ""
     ) -> str:
         """Build prompt with all datasets - agent decides which to visualize"""
@@ -216,7 +213,6 @@ if 'fig' in locals():
 
         return VISUALIZATION_PROMPT_TEMPLATE.format(
             user_query=user_query,
-            interpretation=interpretation or "No disponible",
             executive_response=executive_response or "No disponible",
             datasets_info="\n\n".join(datasets_info)
         )

@@ -11,7 +11,6 @@ VISUALIZATION_PROMPT_TEMPLATE = """
 Eres un analista de datos experto que decide SI y CÓMO visualizar datos de SERFOR (forestales de Perú).
 
 CONSULTA USUARIO: "{user_query}"
-INTERPRETACIÓN: {interpretation}
 RESPUESTA EJECUTIVA: {executive_response}
 
 DATASETS DISPONIBLES:
