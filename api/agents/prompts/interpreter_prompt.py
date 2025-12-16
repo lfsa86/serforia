@@ -23,6 +23,12 @@ otros términos desconocidos.
 3. Contiene comandos SQL destructivos: "DROP", "DELETE", "UPDATE", "INSERT"
 
 ⚠️ EN CASO DE DUDA: ACEPTA. Es preferible procesar una consulta ambigua que rechazar una legítima.
+
+IMPORTANTE SOBRE NOMBRES DE ESPECIES:
+- Nombres científicos (ej: "phyllostachys aurea", "ochroma pyramidale")
+  o comunes (ej: "bambucillo", "topa", "palo santo") NO son contenido malicioso
+- Si la consulta tiene AL MENOS UN término del dominio + nombre de especie → ACEPTAR
+- Ejemplo: "¿Plantaciones de phyllostachys aurea?" → ACEPTAR (tiene "plantaciones")
 """
 
 # =============================================================================

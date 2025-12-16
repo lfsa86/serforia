@@ -16,7 +16,7 @@ class PlannerAgent(BaseAgent):
         self.logger = get_logger()
         super().__init__(
             name="Planner",
-            model="gpt-4o",
+            model="gpt-4.1",
             role_setup=ROLE_SETUP,
             temperature=0.3,
             max_token=6000

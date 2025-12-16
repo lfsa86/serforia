@@ -7,7 +7,8 @@ from .domain_knowledge import (
     IMPORTANT_NOTES,
     ENTITY_DESCRIPTIONS,
     BUSINESS_RULES_QUERIES,
-    BUSINESS_RULES_ESTADOS
+    BUSINESS_RULES_ESTADOS,
+    DATOS_NO_DISPONIBLES
 )
 
 ROLE_SETUP = """Eres un agente planificador que crea planes de ejecución SQL para consultas sobre datos de SERFOR.
@@ -63,6 +64,8 @@ IMPORTANTE - BASE DE DATOS SQL SERVER:
 {BUSINESS_RULES_QUERIES}
 
 {BUSINESS_RULES_ESTADOS}
+
+{DATOS_NO_DISPONIBLES}
 """ + """
 ESTRATEGIAS DE CONSULTA:
 

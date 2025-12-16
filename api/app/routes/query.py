@@ -116,10 +116,12 @@ async def health_check():
         conn.close()
         db_status = "connected"
     except Exception as e:
-        db_status = f"error: {str(e)}"
+        # Log error internally but don't expose details to client
+        logger.error(f"Health check DB error: {str(e)}")
+        db_status = "error"
 
     return HealthResponse(
-        status="healthy",
+        status="healthy" if db_status == "connected" else "degraded",
         database=db_status,
         timestamp=datetime.now().isoformat()
     )
