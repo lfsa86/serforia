@@ -80,7 +80,7 @@ async def process_query(
 
         response_time_ms = int((time.time() - start_time) * 1000)
 
-        # Log error to WAZUH
+        # Log error to WAZUH (internal - includes full error)
         wazuh.log_query(
             user_id=current_user.id,
             user_name=current_user.nombre,
@@ -93,7 +93,11 @@ async def process_query(
             response_time_ms=response_time_ms
         )
 
-        raise HTTPException(status_code=500, detail=str(e))
+        # Return generic error to client (don't expose internal details)
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno del servidor. Por favor, intente nuevamente."
+        )
 
 
 @router.get("/health", response_model=HealthResponse)

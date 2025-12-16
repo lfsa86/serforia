@@ -50,3 +50,5 @@ demo-db/init/*.sql
 
 .claude/
 .playwright-mcp/
+DEV_TEMP/*
+.DS_Store

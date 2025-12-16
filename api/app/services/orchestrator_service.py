@@ -104,10 +104,11 @@ class OrchestratorService:
             print(f"❌ ERROR in OrchestratorService:")
             print(error_detail)
             self.logger.log_error("OrchestratorService", f"Error processing query: {str(e)}")
+            # Return generic error to client (don't expose internal details)
             return {
                 "success": False,
-                "error": str(e),
-                "final_response": f"Error processing query: {str(e)}",
+                "error": "Error interno al procesar la consulta",
+                "final_response": "Ocurrió un error al procesar su consulta. Por favor, intente nuevamente.",
                 "agents_used": []
             }
 
