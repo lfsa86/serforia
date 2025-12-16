@@ -12,8 +12,8 @@ export interface UserInfo {
 
 export interface LoginResponse {
   success: boolean;
-  token: string;
-  user: UserInfo;
+  token?: string;
+  user?: UserInfo;
   error?: string;
 }
 

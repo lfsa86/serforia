@@ -20,9 +20,20 @@ const decodeJwtPayload = (token: string): { exp?: number } | null => {
 
 export const authService = {
   login: async (usuario: string, password: string): Promise<LoginResponse> => {
-    const request: LoginRequest = { usuario, password };
-    const response = await axios.post<LoginResponse>(`${API_URL}/auth/login`, request);
-    return response.data;
+    try {
+      const request: LoginRequest = { usuario, password };
+      const response = await axios.post<LoginResponse>(`${API_URL}/auth/login`, request);
+      return response.data;
+    } catch (error: unknown) {
+      // Handle rate limit (429)
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        return {
+          success: false,
+          error: 'Demasiados intentos de inicio de sesión. Por favor, espere un momento.',
+        };
+      }
+      throw error;
+    }
   },
 
   logout: (): void => {

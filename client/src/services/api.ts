@@ -25,14 +25,23 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle 401 errors
+// Response interceptor - Handle error responses
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+
+    // 401 Unauthorized - Session expired
+    if (status === 401) {
       authService.logout();
       window.location.href = '/login?expired=true';
     }
+
+    // 429 Too Many Requests - Rate limit exceeded
+    if (status === 429) {
+      error.message = 'Demasiadas solicitudes. Por favor, espere un momento antes de intentar nuevamente.';
+    }
+
     return Promise.reject(error);
   }
 );
