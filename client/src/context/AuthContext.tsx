@@ -4,12 +4,17 @@ import type { UserInfo } from '../types/auth';
 
 const TOKEN_CHECK_INTERVAL = 5 * 60 * 1000; // Verificar cada 5 minutos
 
+interface LoginResult {
+  success: boolean;
+  error?: string;
+}
+
 interface AuthContextType {
   user: UserInfo | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (usuario: string, password: string) => Promise<boolean>;
+  login: (usuario: string, password: string) => Promise<LoginResult>;
   logout: () => void;
 }
 
@@ -73,7 +78,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => clearInterval(intervalId);
   }, [token, handleSessionExpired]);
 
-  const login = async (usuario: string, password: string): Promise<boolean> => {
+  const login = async (usuario: string, password: string): Promise<LoginResult> => {
     try {
       const response = await authService.login(usuario, password);
 
@@ -81,13 +86,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         authService.saveAuth(response.token, response.user);
         setToken(response.token);
         setUser(response.user);
-        return true;
+        return { success: true };
       }
 
-      return false;
+      return {
+        success: false,
+        error: response.error || 'Usuario o contraseña incorrectos'
+      };
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      return {
+        success: false,
+        error: 'Error al conectar con el servidor'
+      };
     }
   };
 

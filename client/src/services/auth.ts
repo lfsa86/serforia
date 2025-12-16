@@ -25,14 +25,37 @@ export const authService = {
       const response = await axios.post<LoginResponse>(`${API_URL}/auth/login`, request);
       return response.data;
     } catch (error: unknown) {
-      // Handle rate limit (429)
-      if (axios.isAxiosError(error) && error.response?.status === 429) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+
+        // 429 - Rate limit exceeded
+        if (status === 429) {
+          return {
+            success: false,
+            error: 'Ha alcanzado el límite de intentos. Por favor, espere un momento antes de volver a intentar.',
+          };
+        }
+
+        // 401 - Unauthorized
+        if (status === 401) {
+          return {
+            success: false,
+            error: 'Usuario o contraseña incorrectos',
+          };
+        }
+
+        // Other HTTP errors
         return {
           success: false,
-          error: 'Demasiados intentos de inicio de sesión. Por favor, espere un momento.',
+          error: 'Error al conectar con el servidor',
         };
       }
-      throw error;
+
+      // Non-axios error
+      return {
+        success: false,
+        error: 'Error al conectar con el servidor',
+      };
     }
   },
 

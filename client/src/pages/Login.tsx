@@ -42,12 +42,12 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
-      const success = await login(usuario, password);
+      const result = await login(usuario, password);
 
-      if (success) {
+      if (result.success) {
         navigate('/');
       } else {
-        setError('Usuario o contraseña incorrectos');
+        setError(result.error || 'Usuario o contraseña incorrectos');
       }
     } catch (err) {
       setError('Error al conectar con el servidor');
