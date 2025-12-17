@@ -22,7 +22,8 @@ class QueryRequest(BaseModel):
         ...,
         min_length=1,
         max_length=500,
-        description="User's natural language query"
+        pattern=r'^[\w\s.,;:?!¿¡()"\'#%áéíóúñüÁÉÍÓÚÑÜ°\-]+$',
+        description="User's natural language query (letters, numbers, spaces, basic punctuation)"
     )
     include_workflow: bool = Field(default=False, description="Include workflow details in response")
 

@@ -12,13 +12,14 @@ class LoginRequest(BaseModel):
         ...,
         min_length=1,
         max_length=100,
-        description="Username"
+        pattern=r'^[\w.\-@]+$',
+        description="Username (alphanumeric, dots, hyphens, underscores, @)"
     )
     password: str = Field(
         ...,
         min_length=1,
         max_length=128,
-        description="Password in plain text"
+        description="Password"
     )
 
     @field_validator('usuario')

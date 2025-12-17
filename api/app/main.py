@@ -3,12 +3,14 @@ Main FastAPI application
 """
 import logging
 from pathlib import Path
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 from dotenv import load_dotenv
 
 from .core import settings
@@ -37,6 +39,21 @@ async def verify_docs_credentials(credentials: HTTPBasicCredentials = Depends(se
             headers={"WWW-Authenticate": "Basic"},
         )
     return credentials.username
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Middleware to add security headers to all responses"""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response = await call_next(request)
+        # Prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        # Disable caching for API responses (security-sensitive data)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        # HSTS - Enforce HTTPS (2 years)
+        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+        return response
+
 
 # Load environment variables
 load_dotenv()
@@ -91,6 +108,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include routers
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
