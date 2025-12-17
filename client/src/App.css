@@ -977,3 +977,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* AI Disclaimer */
+.ai-disclaimer {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: #FFF8E1;
+  border: 1px solid #FFE082;
+  border-left: 4px solid #FFA000;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #000;
+  line-height: 1.5;
+}
+
+.ai-disclaimer strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #E65100;
+  font-size: 0.85rem;
+}
+
+.ai-disclaimer p {
+  margin: 0;
+}

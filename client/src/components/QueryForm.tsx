@@ -70,6 +70,17 @@ export const QueryForm = ({ onSubmit, isLoading }: QueryFormProps) => {
         <Send size={18} />
         {isLoading ? 'Procesando...' : 'Procesar Consulta'}
       </button>
+
+      <div className="ai-disclaimer">
+        <strong>Aviso de Transparencia</strong>
+        <p>
+          Usted está interactuando con un sistema de inteligencia artificial (IA).
+          Las respuestas y resultados presentados son generados de forma algorítmica
+          a partir de información institucional disponible, y se proporcionan como
+          apoyo a la consulta y análisis de datos. Este sistema no reemplaza los
+          criterios técnicos ni administrativos establecidos por SERFOR.
+        </p>
+      </div>
     </form>
   );
 };
