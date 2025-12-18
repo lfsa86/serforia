@@ -43,7 +43,7 @@ class QueryRequest(BaseModel):
 class QueryResultSet(BaseModel):
     """Individual query result set"""
     description: str
-    data: List[Dict[str, Any]]
+    data: List[Dict[str, Any]] = Field(default=[], max_length=30000)
     row_count: int
     is_primary: bool = False
 
@@ -53,11 +53,11 @@ class QueryResponse(BaseModel):
     success: bool
     executive_response: str = ""
     final_response: str = ""
-    agents_used: List[str] = []
-    data: Optional[List[Dict[str, Any]]] = None  # Primary result (last query)
-    query_results: Optional[List[QueryResultSet]] = None  # All query results
-    visualization_data: Optional[List[Dict[str, Any]]] = None
-    sql_queries: Optional[List[Dict[str, Any]]] = None
+    agents_used: List[str] = Field(default=[], max_length=10)
+    data: Optional[List[Dict[str, Any]]] = Field(default=None, max_length=30000)
+    query_results: Optional[List[QueryResultSet]] = Field(default=None, max_length=100)
+    visualization_data: Optional[List[Dict[str, Any]]] = Field(default=None, max_length=30000)
+    sql_queries: Optional[List[Dict[str, Any]]] = Field(default=None, max_length=100)
     error: Optional[str] = None
     workflow_data: Optional[Dict[str, Any]] = None
     # Guardrails rejection fields
