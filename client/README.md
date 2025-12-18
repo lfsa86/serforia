@@ -20,8 +20,15 @@ brew install node
 
 **Linux (Ubuntu/Debian):**
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
+# Añadir repositorio
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+
+# Instalar Node.js
+sudo yum install -y nodejs
+
+# Verificar instalación (debe mostrar v20.x.x)
+node -v
+npm -v
 ```
 
 ## Instalación
@@ -41,7 +48,7 @@ npm install
 1. Crea un archivo `.env` en la carpeta `client/` (opcional):
 
 ```env
-VITE_API_URL=http://localhost:8000/api
+VITE_API_URL=http://your-url:8000/api
 ```
 
 Si no creas este archivo, la aplicación usará la URL por defecto configurada en el código.
@@ -64,11 +71,7 @@ npm run build
 
 Los archivos optimizados se generarán en la carpeta `dist/`.
 
-### Preview del Build
-
-```bash
-npm run preview
-```
+Consultar la documentación de despliegue.
 
 ## Estructura del Proyecto
 
@@ -105,7 +108,7 @@ npm run lint
 
 ## Tecnologías Utilizadas
 
-- **React 19** - Framework de UI
+- **React 20** - Framework de UI
 - **TypeScript** - Tipado estático
 - **Vite** - Build tool y dev server
 - **Axios** - Cliente HTTP
@@ -117,13 +120,13 @@ npm run lint
 Asegúrate de que la API backend tenga configurado CORS para permitir conexiones desde el cliente. En el archivo `.env` de la API, debe incluir:
 
 ```env
-CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+CORS_ORIGINS=http://your-url:5173,http://your-url:3000
 ```
 
 ## Troubleshooting
 
 ### Error de conexión a la API
-- Verifica que la API esté corriendo en http://localhost:8000
+- Verifica que la API esté corriendo en http://your-url:8000
 - Revisa la configuración de `VITE_API_URL` en el archivo `.env`
 - Confirma la configuración de CORS en el backend
 
@@ -170,15 +173,5 @@ npm install -D nombre-paquete
 
 ## Build y Deployment
 
-Para producción, después de ejecutar `npm run build`, puedes servir los archivos estáticos de la carpeta `dist/` con cualquier servidor web o servicios como Vercel, Netlify, etc.
+Para producción, después de ejecutar `npm run build`, puedes servir los archivos estáticos de la carpeta `dist/` con cualquier servidor web.
 
-### Opción 1: Servidor estático simple
-```bash
-npm install -g serve
-serve -s dist -p 80
-```
-
-### Opción 2: Servicios de hosting
-- **Vercel**: `vercel --prod`
-- **Netlify**: Arrastra la carpeta `dist/` a netlify.com
-- **GitHub Pages**, **Firebase Hosting**, etc.

@@ -19,10 +19,11 @@ ENV/
 .uv/
 uv.lock
 
-# Environment variables
+# Environment variables (plaintext - NEVER commit)
 .env
 .env.local
 .env.*.local
+# Note: .env.encrypted IS safe to commit (encrypted with ENV_ENCRYPTION_KEY)
 
 # Logs
 logs/

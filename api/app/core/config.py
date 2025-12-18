@@ -1,8 +1,18 @@
 """
 Configuration settings for the FastAPI application
 """
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import List
+
+# Load encrypted env if available (for QA/Production)
+_env_encryption_key = os.environ.get('ENV_ENCRYPTION_KEY')
+_encrypted_env_path = Path(__file__).parent.parent.parent / '.env.encrypted'
+
+if _env_encryption_key and _encrypted_env_path.exists():
+    from utils.env_crypto import inject_encrypted_env
+    inject_encrypted_env(str(_encrypted_env_path), _env_encryption_key)
 
 
 class Settings(BaseSettings):
