@@ -13,11 +13,11 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
     API_RELOAD: bool = True
 
-    # Database Settings
-    DB_SERVER: str = "localhost"
+    # Database Settings (from .env)
+    DB_SERVER: str
     DB_PORT: int = 1433
-    DB_DATABASE: str = "SERFOR_BDDWH"
-    DB_USERNAME: str = "sa"
+    DB_DATABASE: str
+    DB_USERNAME: str
     DB_PASSWORD: str
     DB_DRIVER: str = "ODBC Driver 18 for SQL Server"
     DB_TRUST_CERT: str = "yes"
@@ -28,10 +28,10 @@ class Settings(BaseSettings):
     # CORS Settings
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
-    # SGI Seguridad Settings
-    SGI_BASE_URL: str = "https://qa.serfor.gob.pe/sgiseguridad"
-    SGI_SISTEMA_ID: int = 41
-    SGI_COMPAGNIA_ID: int = 1
+    # SGI Seguridad Settings (from .env)
+    SGI_BASE_URL: str
+    SGI_SISTEMA_ID: int
+    SGI_COMPAGNIA_ID: int
 
     # Auth Dev Mode (bypass para desarrollo)
     AUTH_DEV_MODE: bool = False
@@ -39,14 +39,10 @@ class Settings(BaseSettings):
     AUTH_DEV_PASSWORD: str = "dev123"
     AUTH_FALLBACK_ON_ERROR: bool = False
 
-    # JWT Settings
-    JWT_SECRET: str = "serfor-jwt-secret-change-in-production"
+    # JWT Settings (from .env)
+    JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_HOURS: int = 2
-
-    # Docs Protection
-    DOCS_USERNAME: str = "serfor_admin"
-    DOCS_PASSWORD: str = "docs_password_change_in_production"
 
     @property
     def cors_origins_list(self) -> List[str]:
