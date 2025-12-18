@@ -21,7 +21,7 @@ class QueryRequest(BaseModel):
     query: str = Field(
         ...,
         min_length=1,
-        max_length=500,
+        max_length=2000,
         pattern=r'^[\w\s.,;:?!¿¡()"\'#%áéíóúñüÁÉÍÓÚÑÜ°\-]+$',
         description="User's natural language query (letters, numbers, spaces, basic punctuation)"
     )

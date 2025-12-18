@@ -11,7 +11,7 @@ class LoginRequest(BaseModel):
     usuario: str = Field(
         ...,
         min_length=1,
-        max_length=100,
+        max_length=50,
         pattern=r'^[\w.\-@]+$',
         description="Username (alphanumeric, dots, hyphens, underscores, @)"
     )
@@ -19,7 +19,8 @@ class LoginRequest(BaseModel):
         ...,
         min_length=1,
         max_length=128,
-        description="Password"
+        pattern=r'^[\x20-\x7E]+$',
+        description="Password (printable ASCII characters)"
     )
 
     @field_validator('usuario')
