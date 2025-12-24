@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { QueryRequest, QueryResponse, HealthResponse } from '../types';
 import { authService } from './auth';
 
-const API_URL = '/estadistico/serforia/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_URL,

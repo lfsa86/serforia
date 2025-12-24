@@ -5,6 +5,8 @@ import { Login } from './pages/Login';
 import { Home } from './pages/Home';
 import './App.css';
 
+const BASE_PATH = import.meta.env.VITE_BASE_PATH?.replace(/\/$/, '') || '/';
+
 function LoginRedirect() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -29,7 +31,7 @@ function LoginRedirect() {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter basename="/estadistico/serforia">
+      <BrowserRouter basename={BASE_PATH}>
         <Routes>
           <Route path="/login" element={<LoginRedirect />} />
           <Route
