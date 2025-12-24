@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
-const backgroundImages = ['/bg_1.jpg', '/bg_2.jpg', '/bg_3.jpg'];
+const backgroundImages = ['/estadistico/serforia/bg_1.jpg', '/estadistico/serforia/bg_2.jpg', '/estadistico/serforia/bg_3.jpg'];
 
 export const Login = () => {
   const [usuario, setUsuario] = useState('');

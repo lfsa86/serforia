@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { LoginRequest, LoginResponse, UserInfo } from '../types/auth';
 
-const API_URL = '/api';
+const API_URL = '/estadistico/serforia/api';
 
 const TOKEN_KEY = 'serfor_token';
 const USER_KEY = 'serfor_user';

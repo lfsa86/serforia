@@ -29,7 +29,7 @@ function LoginRedirect() {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/estadistico/serforia">
         <Routes>
           <Route path="/login" element={<LoginRedirect />} />
           <Route
