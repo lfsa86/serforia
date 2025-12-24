@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { QueryForm } from '../components/QueryForm';
 import { ResultsDisplay } from '../components/ResultsDisplay';
 import { queryApi } from '../services/api';
@@ -12,6 +12,7 @@ export const Home = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewCounts, setViewCounts] = useState<ViewCountInfo[]>([]);
   const { user, logout } = useAuth();
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   // Cargar los conteos de las vistas al montar el componente
   useEffect(() => {
@@ -53,6 +54,14 @@ export const Home = () => {
         include_workflow: false,
       });
       setResults(response);
+
+      // Scroll automático hacia los resultados después de un breve delay
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       setError(errorMessage);
@@ -63,6 +72,14 @@ export const Home = () => {
         agents_used: [],
         error: errorMessage,
       });
+
+      // También hacer scroll en caso de error
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
     } finally {
       setIsLoading(false);
     }
@@ -109,20 +126,22 @@ export const Home = () => {
           <QueryForm onSubmit={handleQuerySubmit} isLoading={isLoading} />
         </section>
 
-        {isLoading && (
-          <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Procesando consulta...</p>
-          </div>
-        )}
+        <div ref={resultsRef}>
+          {isLoading && (
+            <div className="loading-container">
+              <div className="spinner"></div>
+              <p>Procesando consulta...</p>
+            </div>
+          )}
 
-        {error && !results && (
-          <div className="error-container">
-            <p>Error: {error}</p>
-          </div>
-        )}
+          {error && !results && (
+            <div className="error-container">
+              <p>Error: {error}</p>
+            </div>
+          )}
 
-        <ResultsDisplay results={results} />
+          <ResultsDisplay results={results} />
+        </div>
       </main>
     </div>
   );
