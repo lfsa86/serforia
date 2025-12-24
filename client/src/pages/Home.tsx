@@ -1,16 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QueryForm } from '../components/QueryForm';
 import { ResultsDisplay } from '../components/ResultsDisplay';
 import { queryApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import type { QueryResponse } from '../types';
+import type { QueryResponse, ViewCountInfo } from '../types';
 import '../App.css';
 
 export const Home = () => {
   const [results, setResults] = useState<QueryResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewCounts, setViewCounts] = useState<ViewCountInfo[]>([]);
   const { user, logout } = useAuth();
+
+  // Cargar los conteos de las vistas al montar el componente
+  useEffect(() => {
+    const fetchViewCounts = async () => {
+      try {
+        const response = await queryApi.getViewCounts();
+        if (response.success) {
+          setViewCounts(response.views);
+        }
+      } catch (err) {
+        console.error('Error fetching view counts:', err);
+        // Silently fail - the UI will show without counts
+      }
+    };
+
+    fetchViewCounts();
+  }, []);
+
+  // Helper para obtener el conteo de una vista por su nombre de display
+  const getCountByDisplayName = (displayName: string): number | null => {
+    const view = viewCounts.find(v => v.display_name === displayName);
+    return view ? view.count : null;
+  };
+
+  // Helper para formatear el conteo
+  const formatCount = (count: number | null): string => {
+    if (count === null) return '';
+    return ` (${count.toLocaleString('es-PE')} registros)`;
+  };
 
   const handleQuerySubmit = async (query: string) => {
     setIsLoading(true);
@@ -58,11 +88,16 @@ export const Home = () => {
           <h2>¡Bienvenido!</h2>
           <p>Esta aplicación te permite consultar la base de datos de la DIR sobre:</p>
           <ul>
-            <li><strong>Autorizaciones:</strong> CTP, desbosque, depósito y cambio de uso</li>
-            <li><strong>Títulos habilitantes</strong></li>
-            <li><strong>Plantaciones forestales</strong></li>
-            <li><strong>Licencias de caza</strong></li>
-            <li><strong>Infractores</strong></li>
+            <li>
+              <strong>Autorizaciones:</strong> CTP{formatCount(getCountByDisplayName('Autorizaciones CTP'))},
+              desbosque{formatCount(getCountByDisplayName('Autorizaciones de desbosque'))},
+              depósito{formatCount(getCountByDisplayName('Autorizaciones de depósito'))} y
+              cambio de uso{formatCount(getCountByDisplayName('Cambios de uso'))}
+            </li>
+            <li><strong>Títulos habilitantes</strong>{formatCount(getCountByDisplayName('Títulos habilitantes'))}</li>
+            <li><strong>Plantaciones forestales</strong>{formatCount(getCountByDisplayName('Plantaciones forestales'))}</li>
+            <li><strong>Licencias de caza</strong>{formatCount(getCountByDisplayName('Licencias de caza'))}</li>
+            <li><strong>Infractores</strong>{formatCount(getCountByDisplayName('Infractores'))}</li>
           </ul>
           <p className="welcome-hint">
             Solo escribe tu consulta -por ejemplo: <em>"¿Qué títulos habilitantes están vigentes en Loreto?"</em> o <em>"Muéstrame las plantaciones asociadas a titulares con sanciones"</em>- y el sistema generará automáticamente la consulta y mostrará los resultados.

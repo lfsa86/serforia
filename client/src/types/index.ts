@@ -41,3 +41,15 @@ export interface HealthResponse {
   database: string;
   timestamp: string;
 }
+
+export interface ViewCountInfo {
+  view_name: string;
+  display_name: string;
+  count: number;
+}
+
+export interface ViewCountsResponse {
+  success: boolean;
+  views: ViewCountInfo[];
+  timestamp: string;
+}

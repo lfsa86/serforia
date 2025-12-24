@@ -65,6 +65,20 @@ class QueryResponse(BaseModel):
     reason: Optional[str] = None
 
 
+class ViewCountInfo(BaseModel):
+    """View count information"""
+    view_name: str
+    display_name: str
+    count: int
+
+
+class ViewCountsResponse(BaseModel):
+    """Response model for view counts"""
+    success: bool
+    views: List[ViewCountInfo] = Field(default=[])
+    timestamp: str
+
+
 class HealthResponse(BaseModel):
     """Health check response"""
     status: str

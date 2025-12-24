@@ -7,7 +7,7 @@ import time
 import pyodbc
 import logging
 
-from ..models import QueryRequest, QueryResponse, HealthResponse, UserInfo
+from ..models import QueryRequest, QueryResponse, HealthResponse, ViewCountInfo, ViewCountsResponse, UserInfo
 from ..services import get_orchestrator_service, get_wazuh_logger
 from ..core import settings
 from ..dependencies import get_current_user
@@ -129,3 +129,70 @@ async def health_check():
         database=db_status,
         timestamp=datetime.now().isoformat()
     )
+
+
+@router.get("/views/counts", response_model=ViewCountsResponse)
+async def get_view_counts(
+    current_user: UserInfo = Depends(get_current_user)
+):
+    """
+    Get row counts for all available database views
+
+    Returns:
+        ViewCountsResponse with counts for each view
+    """
+    # Mapping of view names to display names (as shown in the UI)
+    view_mappings = {
+        "V_AUTORIZACION_CTP": "Autorizaciones CTP",
+        "V_AUTORIZACION_DEPOSITO": "Autorizaciones de depósito",
+        "V_AUTORIZACION_DESBOSQUE": "Autorizaciones de desbosque",
+        "V_CAMBIO_USO": "Cambios de uso",
+        "V_TITULOHABILITANTE": "Títulos habilitantes",
+        "V_PLANTACION": "Plantaciones forestales",
+        "V_LICENCIA_CAZA": "Licencias de caza",
+        "V_INFRACTOR": "Infractores"
+    }
+
+    view_counts = []
+
+    try:
+        conn = pyodbc.connect(settings.database_url, timeout=10)
+        cursor = conn.cursor()
+
+        for view_name, display_name in view_mappings.items():
+            try:
+                # Get count for each view (views are in Dir schema, not dbo)
+                count_query = f"SELECT COUNT(*) FROM Dir.[{view_name}]"
+                result = cursor.execute(count_query).fetchone()
+                count = result[0] if result else 0
+
+                view_counts.append(ViewCountInfo(
+                    view_name=view_name,
+                    display_name=display_name,
+                    count=count
+                ))
+
+            except Exception as e:
+                logger.warning(f"Error getting count for {view_name}: {str(e)}")
+                # Add with count 0 if query fails
+                view_counts.append(ViewCountInfo(
+                    view_name=view_name,
+                    display_name=display_name,
+                    count=0
+                ))
+
+        cursor.close()
+        conn.close()
+
+        return ViewCountsResponse(
+            success=True,
+            views=view_counts,
+            timestamp=datetime.now().isoformat()
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting view counts: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Error al obtener conteos de vistas"
+        )

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { QueryRequest, QueryResponse, HealthResponse } from '../types';
+import type { QueryRequest, QueryResponse, HealthResponse, ViewCountsResponse } from '../types';
 import { authService } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -54,6 +54,11 @@ export const queryApi = {
 
   healthCheck: async (): Promise<HealthResponse> => {
     const response = await api.get<HealthResponse>('/health');
+    return response.data;
+  },
+
+  getViewCounts: async (): Promise<ViewCountsResponse> => {
+    const response = await api.get<ViewCountsResponse>('/views/counts');
     return response.data;
   },
 };
