@@ -104,18 +104,21 @@ export const Home = () => {
         <section className="welcome-section">
           <h2>¡Bienvenido!</h2>
           <p>Esta aplicación te permite consultar la base de datos de la DIR sobre:</p>
-          <ul>
-            <li>
-              <strong>Autorizaciones:</strong> CTP{formatCount(getCountByDisplayName('Autorizaciones CTP'))},
-              desbosque{formatCount(getCountByDisplayName('Autorizaciones de desbosque'))},
-              depósito{formatCount(getCountByDisplayName('Autorizaciones de depósito'))} y
-              cambio de uso{formatCount(getCountByDisplayName('Cambios de uso'))}
-            </li>
-            <li><strong>Títulos habilitantes</strong>{formatCount(getCountByDisplayName('Títulos habilitantes'))}</li>
-            <li><strong>Plantaciones forestales</strong>{formatCount(getCountByDisplayName('Plantaciones forestales'))}</li>
-            <li><strong>Licencias de caza</strong>{formatCount(getCountByDisplayName('Licencias de caza'))}</li>
-            <li><strong>Infractores</strong>{formatCount(getCountByDisplayName('Infractores'))}</li>
-          </ul>
+          <div className="view-counts">
+
+            <ul>
+              <li><strong>Autorizaciones CTP</strong> {formatCount(getCountByDisplayName('Autorizaciones CTP'))}</li>
+              <li><strong>Autorizaciones desbosque</strong> {formatCount(getCountByDisplayName('Autorizaciones de desbosque'))}</li>
+              <li><strong>Autorizaciones depósito</strong> {formatCount(getCountByDisplayName('Autorizaciones de depósito'))}</li>
+              <li><strong>Autorizaciones cambio de uso</strong> {formatCount(getCountByDisplayName('Cambios de uso'))}</li>
+            </ul>
+            <ul>
+              <li><strong>Títulos habilitantes</strong>{formatCount(getCountByDisplayName('Títulos habilitantes'))}</li>
+              <li><strong>Plantaciones forestales</strong>{formatCount(getCountByDisplayName('Plantaciones forestales'))}</li>
+              <li><strong>Licencias de caza</strong>{formatCount(getCountByDisplayName('Licencias de caza'))}</li>
+              <li><strong>Infractores</strong>{formatCount(getCountByDisplayName('Infractores'))}</li>
+            </ul>
+          </div>
           <p className="welcome-hint">
             Solo escribe tu consulta -por ejemplo: <em>"¿Qué títulos habilitantes están vigentes en Loreto?"</em> o <em>"Muéstrame las plantaciones asociadas a titulares con sanciones"</em>- y el sistema generará automáticamente la consulta y mostrará los resultados.
           </p>
