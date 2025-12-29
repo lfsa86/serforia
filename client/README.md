@@ -45,13 +45,19 @@ npm install
 
 ## Configuración
 
-1. Crea un archivo `.env` en la carpeta `client/` (opcional):
+1. Crea un archivo `.env` en la carpeta `client/`:
+
+- Para producción con sub-ruta específica
+VITE_APP_URL=/estadistico/serforia/api
+VITE_BASE_PATH=/estadistico/serforia/
+- Para desarrollo
+VITE_API_URL=http://your-url:8000/api
+VITE_BASE_PATH=/
 
 ```env
-VITE_API_URL=http://your-url:8000/api
+VITE_APP_URL=/estadistico/serforia/api
+VITE_BASE_PATH=/estadistico/serforia/
 ```
-
-Si no creas este archivo, la aplicación usará la URL por defecto configurada en el código.
 
 ## Ejecución
 
